@@ -1,0 +1,39 @@
+- hosts: servers
+  become: yes
+  vars_files:
+    - ../users.csv
+
+  tasks:
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+        update_cache: yes
+
+    - name: Ensure docker is started
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Create users
+      loop: "{{ users }}"
+      vars:
+        user_data: "{{ item.split(',') }}"
+      user:
+        name: "{{ user_data[0] }}"
+        password: "{{ user_data[1] | password_hash('sha512') }}"
+        shell: /bin/bash
+        create_home: yes
+
+    - name: Add users to docker group
+      user:
+        name: "{{ item.split(',')[0] }}"
+        groups: docker
+        append: yes
+      loop: "{{ users }}"
+
+    - name: Copy users CSV for email notification
+      copy:
+        src: ../users.csv
+        dest: /tmp/users.csv
