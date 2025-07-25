@@ -22,7 +22,7 @@ resource "google_compute_instance" "default" {
   }
 
   metadata = {
-    ssh-keys = "ansible:${file(var.ssh_public_key_path)}"
+    ssh-keys = "ansible:${var.ssh_public_key}"
   }
 
   tags = ["http-server"]
