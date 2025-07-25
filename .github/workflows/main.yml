@@ -1,1 +1,51 @@
-# GitHub Actions workflow
+name: GCP VM Provisioning & Configuration
+
+on:
+  workflow_dispatch:
+
+jobs:
+  provision:
+    runs-on: ubuntu-latest
+
+    env:
+      GOOGLE_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS_JSON }}
+      PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      REGION: us-central1
+      ZONE: us-central1-a
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v2
+
+    - name: Terraform Init
+      run: terraform init
+      working-directory: ./terraform
+
+    - name: Terraform Apply
+      run: terraform apply -auto-approve -var="gcp_credentials_file=credentials.json" -var="project=${PROJECT_ID}" -var="region=${REGION}" -var="zone=${ZONE}"
+      working-directory: ./terraform
+      env:
+        GOOGLE_APPLICATION_CREDENTIALS: credentials.json
+
+    - name: Get Server IP
+      id: get-ip
+      run: |
+        terraform output -raw instance_ip > instance_ip.txt
+      working-directory: ./terraform
+
+    - name: Set up Ansible
+      run: sudo apt-get update && sudo apt-get install -y ansible sshpass
+
+    - name: Run Ansible Playbook
+      run: |
+        export INSTANCE_IP=$(cat ./terraform/instance_ip.txt)
+        echo "$INSTANCE_IP ansible_user=ansible ansible_ssh_private_key_file=~/.ssh/id_rsa" > ./ansible/inventory.ini
+        ansible-playbook -i ./ansible/inventory.ini ./ansible/playbook.yml
+
+    - name: Send emails to users
+      run: |
+        pip install smtplib
+        python3 ./scripts/send_email.py ./users.csv ${{ secrets.SMTP_USER }} ${{ secrets.SMTP_PASS }} $(cat ./terraform/instance_ip.txt)
