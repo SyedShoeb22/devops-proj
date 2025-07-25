@@ -6,12 +6,13 @@ provider "google" {
 
 resource "google_compute_instance" "default" {
   name         = "devops-instance"
-  machine_type = "e2-medium"
+  machine_type = "n2-standard-8"   # 4 vCPUs, 32GB RAM
   zone         = var.zone
 
   boot_disk {
     initialize_params {
       image = "ubuntu-os-cloud/ubuntu-2004-lts"
+      size  = 100   # 100GB boot disk
     }
   }
 
