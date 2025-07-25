@@ -43,7 +43,9 @@ jobs:
         run: terraform init
 
       - name: Terraform Plan
-        run: terraform plan -var="gcp_credentials_file=service-account.json"
+        run: 
+          echo "Checking credentials file:"
+          terraform plan -var="gcp_credentials_file=service-account.json" -input=false -lock=false -no-color -out=tfplan
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main'
