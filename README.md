@@ -1,5 +1,4 @@
 # DevOps Project: Automating GCP Instance Provisioning and User Creation with Terraform, Ansible, and GitHub Actions
-This guide details a step-by-step process for the following workflow:
 
 Use Terraform to provision a GCP VM instance.
 
