@@ -1,6 +1,10 @@
+locals {
+  credentials = jsondecode(file(var.gcp_credentials_file))
+}
+
 provider "google" {
   credentials = file(var.gcp_credentials_file)
-  project     = var.project
+  project     = local.credentials.project_id
   region      = var.region
 }
 
@@ -29,5 +33,6 @@ resource "google_compute_instance" "default" {
 }
 
 output "instance_ip" {
-  value = google_compute_instance.default.network_interface[0].access_config[0].nat_ip
+  description = "The external IP address of the created instance"
+  value       = google_compute_instance.default.network_interface[0].access_config[0].nat_ip
 }
