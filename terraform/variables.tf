@@ -1,5 +1,5 @@
 variable "gcp_credentials_file" {
-  description = "Path to the GCP service account JSON credentials file"
+  description = "Path to the GCP credentials JSON file"
   type        = string
 }
 
@@ -13,9 +13,4 @@ variable "zone" {
   description = "GCP zone"
   type        = string
   default     = "us-central1-a"
-}
-
-variable "ssh_public_key" {
-  description = "SSH public key content for VM access"
-  type        = string
 }
