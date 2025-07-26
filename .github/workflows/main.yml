@@ -1,10 +1,10 @@
-name: 'Terraform CI on GCP'
+name: 'Terraform + Ansible on GCP'
 
 on:
   workflow_dispatch:
 
 jobs:
-  terraform-ansible:
+  terraform:
     runs-on: ubuntu-latest
 
     env:
@@ -12,7 +12,6 @@ jobs:
 
     defaults:
       run:
-        shell: bash
         working-directory: ./terraform
 
     steps:
@@ -24,8 +23,10 @@ jobs:
         with:
           terraform_version: 1.7.4
 
-      - name: Create GCP credentials file
+      - name: Create credentials file
         run: echo "${GOOGLE_CREDENTIALS}" > service-account.json
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
       - name: Add SSH key
         run: |
@@ -41,27 +42,29 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
-      - name: Terraform Plan
-        run: terraform plan -var="gcp_credentials_file=service-account.json" -out=tfplan
+      - name: Check if instance exists
+        id: check_instance
+        run: |
+          terraform refresh -var="gcp_credentials_file=service-account.json"
+          if terraform state list | grep google_compute_instance.default; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve -var="gcp_credentials_file=service-account.json"
-
-      - name: Get Public IP of Instance
-        id: ip
+        if: steps.check_instance.outputs.exists == 'false'
         run: |
-          IP=$(terraform output -raw instance_public_ip)
-          echo "instance_ip=$IP" >> $GITHUB_ENV
-          echo "Instance IP: $IP"
-
-      - name: Create Ansible Inventory File
-        run: |
-          echo "[servers]" > ../ansible/inventory.ini
-          echo "${{ env.instance_ip }} ansible_user=ansible ansible_ssh_private_key_file=~/.ssh/id_rsa" >> ../ansible/inventory.ini
+          terraform apply -auto-approve \
+            -var="gcp_credentials_file=service-account.json" \
+            -var="region=us-central1" \
+            -var="zone=us-central1-a" \
+            -var="ssh_public_key=~/.ssh/id_rsa.pub"
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
       - name: Run Ansible Playbook
-        working-directory: ./ansible
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ansible
-          ansible-playbook -i inventory.ini playbook.yml
+          sudo apt update && sudo apt install -y ansible
+          ansible-playbook -i ../inventory.ini ../main.yml
+        working-directory: ./ansible
