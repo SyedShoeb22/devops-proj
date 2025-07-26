@@ -1,4 +1,4 @@
-name: Ansible Provisioning
+name: Provision GCP VMs with Ansible
 
 on:
   push:
@@ -11,43 +11,50 @@ jobs:
 
     env:
       PROJECT_ID: your-gcp-project-id
-      ZONE: your-vm-zone
-      INSTANCE_NAME: your-instance-name
-      PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      ZONE: asia-south1-c
+      INSTANCE_NAME: instance-1
+      GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Install Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
-        with:
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          project_id: ${{ env.PROJECT_ID }}
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
 
-      - name: Fetch external IP of GCP instance
-        id: get-ip
-        run: |
-          IP=$(gcloud compute instances describe "$INSTANCE_NAME" \
-            --zone="$ZONE" \
-            --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
-          echo "PUBLIC_IP=$IP" >> $GITHUB_ENV
+    - name: Install Ansible
+      run: |
+        sudo apt update
+        sudo apt install -y ansible
 
-      - name: Write private key to file
-        run: |
-          echo "$PRIVATE_KEY" > key.pem
-          chmod 600 key.pem
+    - name: Set up Google Cloud CLI
+      uses: google-github-actions/setup-gcloud@v2
+      with:
+        project_id: ${{ env.PROJECT_ID }}
+        service_account_key: ${{ secrets.GOOGLE_CREDENTIALS }}
+        export_default_credentials: true
 
-      - name: Generate dynamic Ansible inventory
-        run: |
-          echo "[servers]" > ansible/inventory.ini
-          echo "$PUBLIC_IP ansible_user=ubuntu ansible_ssh_private_key_file=key.pem" >> ansible/inventory.ini
+    - name: Fetch external IP of GCP instance
+      id: get-ip
+      run: |
+        IP=$(gcloud compute instances describe $INSTANCE_NAME \
+          --project=$PROJECT_ID --zone=$ZONE \
+          --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
+        echo "PUBLIC_IP=$IP" >> $GITHUB_ENV
 
-      - name: Install Ansible
-        run: |
-          sudo apt update
-          sudo apt install -y ansible
+    - name: Add SSH private key
+      run: |
+        echo "$SSH_PRIVATE_KEY" > key.pem
+        chmod 600 key.pem
 
-      - name: Run Ansible playbook
-        run: |
-          ansible-playbook ansible/playbook.yml -i ansible/inventory.ini
+    - name: Generate dynamic Ansible inventory
+      run: |
+        echo "[servers]" > inventory.ini
+        echo "$PUBLIC_IP ansible_user=ubuntu ansible_ssh_private_key_file=key.pem" >> inventory.ini
+
+    - name: Run Ansible playbook
+      run: |
+        ansible-playbook -i inventory.ini playbook.yml
