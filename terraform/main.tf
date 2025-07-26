@@ -30,7 +30,6 @@ provider "google" {
   credentials = file(var.gcp_credentials_file)
   project     = local.credentials.project_id
   region      = var.region
-  zone        = var.zone
 }
 
 resource "google_compute_instance" "default" {
