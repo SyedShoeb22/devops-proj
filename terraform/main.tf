@@ -7,20 +7,6 @@ terraform {
   }
 }
 
-variable "gcp_credentials_file" {
-  description = "Path to the GCP credentials JSON file"
-  type        = string
-}
-
-variable "region" {
-  default     = "us-central1"
-  description = "GCP region"
-}
-
-variable "zone" {
-  default     = "us-central1-a"
-  description = "GCP zone"
-}
 
 locals {
   credentials = jsondecode(file(var.gcp_credentials_file))
