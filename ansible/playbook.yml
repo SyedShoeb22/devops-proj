@@ -1,10 +1,7 @@
 - hosts: servers
   become: yes
-
   vars:
-    users:
-      - "shoeb,Pass@123,syedshoeb8380@gmail.com"
-      - "abrar,Pass@123,syedabrar7757@gmail.com"
+    users: "{{ lookup('file', 'users.csv').splitlines() }}"
 
   tasks:
     - name: Install Docker
@@ -13,7 +10,7 @@
         state: present
         update_cache: yes
 
-    - name: Ensure Docker is started
+    - name: Start Docker
       service:
         name: docker
         state: started
@@ -29,7 +26,7 @@
         shell: /bin/bash
         create_home: yes
 
-    - name: Add users to docker group
+    - name: Add user to docker group
       loop: "{{ users }}"
       vars:
         username: "{{ item.split(',')[0] }}"
@@ -38,24 +35,24 @@
         groups: docker
         append: yes
 
-    - name: Send email with user credentials
+    - name: Send email with credentials
       loop: "{{ users }}"
       vars:
-        user_data: "{{ item.split(',') }}"
-        username: "{{ user_data[0] }}"
-        password: "{{ user_data[1] }}"
-        email: "{{ user_data[2] }}"
+        u: "{{ item.split(',') }}"
       mail:
-        subject: "Your New Linux Account"
-        to: "{{ email }}"
+        subject: "Your Account on {{ inventory_hostname }}"
+        to: "{{ u[2] }}"
         body: |
-          Hello {{ username }},
-
+          Hello {{ u[0] }},
+          
           Your account has been created on {{ inventory_hostname }}.
-          You can SSH into the server using:
+          Username: {{ u[0] }}
+          Password: {{ u[1] }}
 
-          Username: {{ username }}
-          Password: {{ password }}
-
-          Regards,
+          Thanks,
           Admin
+        from: "admin@example.com"
+        smtp_host: smtp.gmail.com
+        smtp_port: 587
+        smtp_user: "{{ lookup('env', 'SMTP_USER') }}"
+        smtp_password: "{{ lookup('env', 'SMTP_PASS') }}"
