@@ -18,5 +18,5 @@ variable "zone" {
 variable "ssh_public_key" {
   description = "SSH public key to use for VM access"
   type        = string
-  default     = ""
+  default     = "~/.ssh/id_rsa.pub"
 }
