@@ -19,15 +19,13 @@ provider "google" {
 }
 
 resource "google_compute_instance" "default" {
-  name         = "devops-instance"
-  machine_type = "n2-standard-8"
+  name         = "example-vm"
+  machine_type = "e2-medium"
   zone         = var.zone
 
   boot_disk {
     initialize_params {
-      image  = "ubuntu-2004-lts"
-      size   = 100
-      type   = "pd-standard"
+      image = "ubuntu-os-cloud/ubuntu-2004-lts"
     }
   }
 
@@ -35,15 +33,16 @@ resource "google_compute_instance" "default" {
     network = "default"
 
     access_config {
-      // Ephemeral external IP
+      // Enables external IP
     }
   }
 
   metadata = {
-    ssh-keys = "ansible:"
+    ssh-keys = "ubuntu:${file(var.ssh_public_key)}"
   }
 
-  tags = ["http-server"]
+  tags = ["http-server", "https-server"]
+}
 
   labels = {
     goog-terraform-provisioned = "true"
