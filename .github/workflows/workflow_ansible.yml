@@ -10,7 +10,10 @@ jobs:
 
     outputs:
       instance_ip: ${{ steps.get_ip.outputs.instance_ip }}
-
+      
+    defaults:
+      run:
+        working-directory: ./terraform
     steps:
     - name: Checkout Repo
       uses: actions/checkout@v4
