@@ -30,9 +30,11 @@ resource "google_compute_instance" "default" {
 
   boot_disk {
     initialize_params {
-      image = "ubuntu-os-cloud/ubuntu-2004-lts"
+      source_image_family = "ubuntu-2204-lts"
+      source_image_project = "ubuntu-os-cloud"
     }
   }
+
 
   network_interface {
     network = "default"
