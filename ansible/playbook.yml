@@ -10,7 +10,7 @@
         state: present
         update_cache: yes
 
-    - name: Ensure docker is started
+    - name: Ensure Docker is started
       service:
         name: docker
         state: started
@@ -27,13 +27,32 @@
         create_home: yes
 
     - name: Add users to docker group
+      loop: "{{ users }}"
+      vars:
+        username: "{{ item.split(',')[0] }}"
       user:
-        name: "{{ item.split(',')[0] }}"
+        name: "{{ username }}"
         groups: docker
         append: yes
-      loop: "{{ users }}"
 
-    - name: Copy users CSV for email notification
-      copy:
-        src: ../users.csv
-        dest: /tmp/users.csv
+    - name: Send email with user credentials
+      loop: "{{ users }}"
+      vars:
+        user_data: "{{ item.split(',') }}"
+        username: "{{ user_data[0] }}"
+        password: "{{ user_data[1] }}"
+        email: "{{ user_data[2] }}"
+      mail:
+        subject: "Your New Linux Account"
+        to: "{{ email }}"
+        body: |
+          Hello {{ username }},
+
+          Your account has been created on {{ inventory_hostname }}.
+          You can SSH into the server using:
+
+          Username: {{ username }}
+          Password: {{ password }}
+
+          Regards,
+          Admin
