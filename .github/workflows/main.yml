@@ -23,7 +23,7 @@ jobs:
         with:
           terraform_version: 1.7.4
 
-      - name: Create GCP credentials file
+      - name: Create credentials file
         run: echo "${GOOGLE_CREDENTIALS}" > service-account.json
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
@@ -42,37 +42,32 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
-      - name: Terraform Refresh and Check Instance
-        id: check_instance
+      - name: Terraform Plan
+        id: plan
         run: |
-          terraform refresh -var="gcp_credentials_file=service-account.json"
-          if terraform state list | grep google_compute_instance.default; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Terraform Apply
-        if: steps.check_instance.outputs.exists == 'false'
-        run: |
-          terraform apply -auto-approve \
+          terraform plan \
+            -out=tfplan \
             -var="gcp_credentials_file=service-account.json" \
             -var="region=us-central1" \
             -var="zone=us-central1-a" \
             -var="ssh_public_key=~/.ssh/id_rsa.pub"
+        continue-on-error: true
 
-      - name: Extract Instance IP
-        id: get_ip
+      - name: Check Plan Result
+        id: plan-check
         run: |
-          echo "INSTANCE_IP=$(terraform output -raw instance_ip)" >> $GITHUB_ENV
+          if terraform show -json tfplan | jq -e '.resource_changes | length == 0'; then
+            echo "no_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "no_changes=false" >> $GITHUB_OUTPUT
+          fi
 
-      - name: Prepare Ansible Inventory
-        run: |
-          echo "[servers]" > ../ansible/inventory.ini
-          echo "$INSTANCE_IP ansible_user=ansible ansible_ssh_private_key_file=~/.ssh/id_rsa" >> ../ansible/inventory.ini
+      - name: Terraform Apply
+        if: steps.plan-check.outputs.no_changes == 'false'
+        run: terraform apply -auto-approve tfplan
 
       - name: Run Ansible Playbook
         run: |
           sudo apt update && sudo apt install -y ansible
-          ansible-playbook -i inventory.ini playbook.yml
+          ansible-playbook -i ../inventory.ini ../playbook.yml
         working-directory: ./ansible
