@@ -1,3 +1,27 @@
+terraform {
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 5.0"
+    }
+  }
+}
+
+variable "gcp_credentials_file" {
+  description = "Path to the GCP credentials JSON file"
+  type        = string
+}
+
+variable "region" {
+  default     = "us-central1"
+  description = "GCP region"
+}
+
+variable "zone" {
+  default     = "us-central1-a"
+  description = "GCP zone"
+}
+
 locals {
   credentials = jsondecode(file(var.gcp_credentials_file))
 }
@@ -6,33 +30,41 @@ provider "google" {
   credentials = file(var.gcp_credentials_file)
   project     = local.credentials.project_id
   region      = var.region
+  zone        = var.zone
 }
 
 resource "google_compute_instance" "default" {
   name         = "devops-instance"
-  machine_type = "n2-standard-8"   # 4 vCPUs, 32GB RAM
+  machine_type = "n2-standard-8"
   zone         = var.zone
 
   boot_disk {
     initialize_params {
-      image = "ubuntu-os-cloud/ubuntu-2004-lts"
-      size  = 100   # 100GB boot disk
+      image  = "ubuntu-2004-lts"
+      size   = 100
+      type   = "pd-standard"
     }
   }
 
   network_interface {
     network = "default"
-    access_config {}
+
+    access_config {
+      // Ephemeral external IP
+    }
   }
 
   metadata = {
-    ssh-keys = "ansible:${var.ssh_public_key}"
+    ssh-keys = "ansible:"
   }
 
   tags = ["http-server"]
+
+  labels = {
+    goog-terraform-provisioned = "true"
+  }
 }
 
 output "instance_ip" {
-  description = "The external IP address of the created instance"
-  value       = google_compute_instance.default.network_interface[0].access_config[0].nat_ip
+  value = google_compute_instance.default.network_interface[0].access_config[0].nat_ip
 }
