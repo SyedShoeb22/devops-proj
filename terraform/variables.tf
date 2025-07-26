@@ -3,11 +3,6 @@ variable "gcp_credentials_file" {
   type        = string
 }
 
-variable "project" {
-  description = "GCP project ID"
-  type        = string
-}
-
 variable "region" {
   description = "GCP region"
   type        = string
@@ -21,6 +16,6 @@ variable "zone" {
 }
 
 variable "ssh_public_key" {
-  description = "SSH public key content for VM access, format: 'ssh-rsa AAAAB3... user@host'"
+  description = "SSH public key content for VM access"
   type        = string
 }
