@@ -69,5 +69,6 @@ jobs:
       - name: Run Ansible Playbook
         run: |
           sudo apt update && sudo apt install -y ansible
-          ansible-playbook -i ../inventory.ini ../playbook.yml
+          ansible-playbook -i inventory.ini playbook.yml
         working-directory: ./ansible
+
