@@ -56,7 +56,7 @@ jobs:
             -var="gcp_credentials_file=service-account.json" \
             -var="region=us-central1" \
             -var="zone=us-central1-a" \
-            -var="ssh_public_key=${{ secrets.SSH_PUBLIC_KEY }}"
+            -var="ssh_public_key=~/.ssh/id_rsa.pub"
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
       
