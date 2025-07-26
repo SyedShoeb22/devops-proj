@@ -1,58 +1,78 @@
-name: Provision GCP VMs with Ansible
+name: 'Terraform + Ansible on GCP'
 
 on:
   workflow_dispatch:
 
 jobs:
-  provision:
+  terraform:
     runs-on: ubuntu-latest
 
     env:
-      PROJECT_ID: your-gcp-project-id
-      ZONE: asia-south1-c
-      INSTANCE_NAME: instance-1
       GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    defaults:
+      run:
+        working-directory: ./terraform
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.x'
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.4
 
-    - name: Install Ansible
-      run: |
-        sudo apt update
-        sudo apt install -y ansible
+      - name: Create GCP credentials file
+        run: echo "${GOOGLE_CREDENTIALS}" > service-account.json
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
-    - name: Set up Google Cloud CLI
-      uses: google-github-actions/setup-gcloud@v2
-      with:
-        project_id: ${{ env.PROJECT_ID }}
-        service_account_key: ${{ secrets.GOOGLE_CREDENTIALS }}
-        export_default_credentials: true
+      - name: Add SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa
+          echo "${SSH_PUBLIC_KEY}" > ~/.ssh/id_rsa.pub
+          chmod 600 ~/.ssh/id_rsa
+          chmod 644 ~/.ssh/id_rsa.pub
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_PUBLIC_KEY: ${{ secrets.SSH_PUBLIC_KEY }}
 
-    - name: Fetch external IP of GCP instance
-      id: get-ip
-      run: |
-        IP=$(gcloud compute instances describe $INSTANCE_NAME \
-          --project=$PROJECT_ID --zone=$ZONE \
-          --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
-        echo "PUBLIC_IP=$IP" >> $GITHUB_ENV
+      - name: Terraform Init
+        run: terraform init
 
-    - name: Add SSH private key
-      run: |
-        echo "$SSH_PRIVATE_KEY" > key.pem
-        chmod 600 key.pem
+      - name: Terraform Refresh and Check Instance
+        id: check_instance
+        run: |
+          terraform refresh -var="gcp_credentials_file=service-account.json"
+          if terraform state list | grep google_compute_instance.default; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
 
-    - name: Generate dynamic Ansible inventory
-      run: |
-        echo "[servers]" > inventory.ini
-        echo "$PUBLIC_IP ansible_user=ubuntu ansible_ssh_private_key_file=key.pem" >> inventory.ini
+      - name: Terraform Apply
+        if: steps.check_instance.outputs.exists == 'false'
+        run: |
+          terraform apply -auto-approve \
+            -var="gcp_credentials_file=service-account.json" \
+            -var="region=us-central1" \
+            -var="zone=us-central1-a" \
+            -var="ssh_public_key=~/.ssh/id_rsa.pub"
 
-    - name: Run Ansible Playbook
-      working-directory: ./ansible
-      run: ansible-playbook -i inventory.ini playbook.yml
+      - name: Extract Instance IP
+        id: get_ip
+        run: |
+          echo "INSTANCE_IP=$(terraform output -raw instance_ip)" >> $GITHUB_ENV
+
+      - name: Prepare Ansible Inventory
+        run: |
+          echo "[servers]" > ../ansible/inventory.ini
+          echo "$INSTANCE_IP ansible_user=ansible ansible_ssh_private_key_file=~/.ssh/id_rsa" >> ../ansible/inventory.ini
+
+      - name: Run Ansible Playbook
+        run: |
+          sudo apt update && sudo apt install -y ansible
+          ansible-playbook -i inventory.ini playbook.yml
+        working-directory: ./ansible
