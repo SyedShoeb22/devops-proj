@@ -1,74 +1,53 @@
-name: 'Terraform + Ansible on GCP'
+name: Ansible Provisioning
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
-  terraform:
+  provision:
     runs-on: ubuntu-latest
 
     env:
-      GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-
-    defaults:
-      run:
-        working-directory: ./terraform
+      PROJECT_ID: your-gcp-project-id
+      ZONE: your-vm-zone
+      INSTANCE_NAME: your-instance-name
+      PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
+      - name: Install Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
         with:
-          terraform_version: 1.7.4
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ env.PROJECT_ID }}
 
-      - name: Create credentials file
-        run: echo "${GOOGLE_CREDENTIALS}" > service-account.json
-        env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-
-      - name: Add SSH key
+      - name: Fetch external IP of GCP instance
+        id: get-ip
         run: |
-          mkdir -p ~/.ssh
-          echo "${SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa
-          echo "${SSH_PUBLIC_KEY}" > ~/.ssh/id_rsa.pub
-          chmod 600 ~/.ssh/id_rsa
-          chmod 644 ~/.ssh/id_rsa.pub
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SSH_PUBLIC_KEY: ${{ secrets.SSH_PUBLIC_KEY }}
+          IP=$(gcloud compute instances describe "$INSTANCE_NAME" \
+            --zone="$ZONE" \
+            --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
+          echo "PUBLIC_IP=$IP" >> $GITHUB_ENV
 
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Terraform Plan
-        id: plan
+      - name: Write private key to file
         run: |
-          terraform plan \
-            -out=tfplan \
-            -var="gcp_credentials_file=service-account.json" \
-            -var="region=us-central1" \
-            -var="zone=us-central1-a" \
-            -var="ssh_public_key=~/.ssh/id_rsa.pub"
-        continue-on-error: true
+          echo "$PRIVATE_KEY" > key.pem
+          chmod 600 key.pem
 
-      - name: Check Plan Result
-        id: plan-check
+      - name: Generate dynamic Ansible inventory
         run: |
-          if terraform show -json tfplan | jq -e '.resource_changes | length == 0'; then
-            echo "no_changes=true" >> $GITHUB_OUTPUT
-          else
-            echo "no_changes=false" >> $GITHUB_OUTPUT
-          fi
+          echo "[servers]" > ansible/inventory.ini
+          echo "$PUBLIC_IP ansible_user=ubuntu ansible_ssh_private_key_file=key.pem" >> ansible/inventory.ini
 
-      - name: Terraform Apply
-        if: steps.plan-check.outputs.no_changes == 'false'
-        run: terraform apply -auto-approve tfplan
-
-      - name: Run Ansible Playbook
+      - name: Install Ansible
         run: |
-          sudo apt update && sudo apt install -y ansible
-          ansible-playbook -i inventory.ini playbook.yml
-        working-directory: ./ansible
+          sudo apt update
+          sudo apt install -y ansible
 
+      - name: Run Ansible playbook
+        run: |
+          ansible-playbook ansible/playbook.yml -i ansible/inventory.ini
