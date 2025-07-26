@@ -23,10 +23,12 @@ jobs:
       with:
         terraform_version: 1.6.6
 
-    - name: Set up GCP credentials
+    - name: Save GCP credentials JSON safely
       run: |
-        echo "${{ secrets.GOOGLE_CREDENTIALS }}" > gcp-creds.json
-      shell: bash
+        echo "${{ secrets.GOOGLE_CREDENTIALS }}" | base64 -d > gcp-creds.json
+      env:
+        GCP_SA_KEY_JSON: ${{ secrets.GOOGLE_CREDENTIALS }}
+
 
     - name: Terraform Init & Apply
       run: |
