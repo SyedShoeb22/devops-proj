@@ -2,7 +2,9 @@
   become: yes
 
   vars:
-    users: "{{ lookup('file', 'users.csv').splitlines() }}"
+    users:
+      - "shoeb,Pass@123,syedshoeb8380@gmail.com"
+      - "abrar,Pass@123,syedabrar7757@gmail.com"
 
   tasks:
     - name: Install Docker
