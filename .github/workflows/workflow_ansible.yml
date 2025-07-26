@@ -31,7 +31,8 @@ jobs:
     - name: Terraform Init & Apply
       run: |
         terraform init
-        terraform apply -auto-approve -var="gcp_credentials_file=${{ secrets.GCP_CREDENTIALS_FILE }}"
+        terraform apply -auto-approve -var="gcp_credentials_file=gcp-creds.json"
+
       env:
         GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
