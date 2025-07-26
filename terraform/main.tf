@@ -19,14 +19,15 @@ provider "google" {
 }
 
 resource "google_compute_instance" "default" {
-  name         = "vm-instance"
-  machine_type = "e2-medium"
+  name         = "devops-instance"
+  machine_type = "n2-standard-8"
   zone         = var.zone
 
   boot_disk {
     initialize_params {
-      source_image_family  = "ubuntu-2204-lts"
-      source_image_project = "ubuntu-os-cloud"
+      image_family  = "ubuntu-2204-lts"
+      image_project = "ubuntu-os-cloud"
+      size          = 100
     }
   }
 
@@ -36,11 +37,12 @@ resource "google_compute_instance" "default" {
   }
 
   metadata = {
-    ssh-keys = "ubuntu:${file(var.ssh_public_key)}"
+    ssh-keys = "ansible:${var.ssh_public_key}"
   }
 
-  tags = ["ssh"]
+  tags = ["http-server"]
 }
+
 
 output "instance_ip" {
   value = google_compute_instance.default.network_interface[0].access_config[0].nat_ip
