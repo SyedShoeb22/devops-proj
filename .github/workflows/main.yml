@@ -1,9 +1,7 @@
 name: Provision GCP VMs with Ansible
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   provision:
