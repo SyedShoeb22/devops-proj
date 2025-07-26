@@ -51,7 +51,7 @@
 
           Thanks,
           Admin
-        from: "admin@example.com"
+        from: "shoeb.corporate@gmail.com"
         smtp_host: smtp.gmail.com
         smtp_port: 587
         smtp_user: "{{ lookup('env', 'SMTP_USER') }}"
