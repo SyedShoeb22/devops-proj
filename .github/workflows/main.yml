@@ -23,7 +23,7 @@ jobs:
         with:
           terraform_version: 1.7.4
 
-      - name: Create credentials file
+      - name: Create GCP credentials file
         run: echo "${GOOGLE_CREDENTIALS}" > service-account.json
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
@@ -42,7 +42,7 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
-      - name: Check if instance exists
+      - name: Terraform Refresh and Check Instance
         id: check_instance
         run: |
           terraform refresh -var="gcp_credentials_file=service-account.json"
@@ -60,11 +60,19 @@ jobs:
             -var="region=us-central1" \
             -var="zone=us-central1-a" \
             -var="ssh_public_key=~/.ssh/id_rsa.pub"
-        env:
-          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+      - name: Extract Instance IP
+        id: get_ip
+        run: |
+          echo "INSTANCE_IP=$(terraform output -raw instance_ip)" >> $GITHUB_ENV
+
+      - name: Prepare Ansible Inventory
+        run: |
+          echo "[servers]" > ../ansible/inventory.ini
+          echo "$INSTANCE_IP ansible_user=ansible ansible_ssh_private_key_file=~/.ssh/id_rsa" >> ../ansible/inventory.ini
 
       - name: Run Ansible Playbook
         run: |
           sudo apt update && sudo apt install -y ansible
-          ansible-playbook -i ../inventory.ini ../playbook.yml
+          ansible-playbook -i inventory.ini playbook.yml
         working-directory: ./ansible
