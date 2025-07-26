@@ -19,32 +19,27 @@ provider "google" {
 }
 
 resource "google_compute_instance" "default" {
-  name         = "example-vm"
+  name         = "vm-instance"
   machine_type = "e2-medium"
   zone         = var.zone
 
-  labels = {
-    environment = "dev"
-    owner       = "shoeb"
-  }
-
   boot_disk {
     initialize_params {
-      source_image_family = "ubuntu-2204-lts"
+      source_image_family  = "ubuntu-2204-lts"
       source_image_project = "ubuntu-os-cloud"
     }
   }
 
-
   network_interface {
     network = "default"
-
     access_config {}
   }
 
   metadata = {
     ssh-keys = "ubuntu:${file(var.ssh_public_key)}"
   }
+
+  tags = ["ssh"]
 }
 
 output "instance_ip" {
