@@ -7,7 +7,6 @@ terraform {
   }
 }
 
-
 locals {
   credentials = jsondecode(file(var.gcp_credentials_file))
 }
@@ -30,7 +29,6 @@ resource "google_compute_instance" "default" {
     }
   }
 
-
   network_interface {
     network = "default"
     access_config {}
@@ -40,9 +38,23 @@ resource "google_compute_instance" "default" {
     ssh-keys = "ubuntu:${var.ssh_public_key}"
   }
 
-  tags = ["http-server"]
+  # 🔑 IMPORTANT: Add 'ssh' tag so firewall rule applies
+  tags = ["ssh"]
 }
 
+# 🔐 Firewall rule to allow SSH from anywhere
+resource "google_compute_firewall" "default_allow_ssh" {
+  name    = "default-allow-ssh"
+  network = "default"
+
+  allow {
+    protocol = "tcp"
+    ports    = ["22"]
+  }
+
+  source_ranges = ["0.0.0.0/0"]
+  target_tags   = ["ssh"]
+}
 
 output "instance_ip" {
   value = google_compute_instance.default.network_interface[0].access_config[0].nat_ip
