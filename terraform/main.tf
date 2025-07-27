@@ -43,8 +43,8 @@ resource "google_compute_instance" "default" {
 }
 
 # 🔐 Firewall rule to allow SSH from anywhere
-resource "google_compute_firewall" "default_allow_ssh" {
-  name    = "default-allow-ssh"
+resource "google_compute_firewall" "custom_allow_ssh" {
+  name    = "custom-allow-ssh"  # <--- changed from default-allow-ssh
   network = "default"
 
   allow {
