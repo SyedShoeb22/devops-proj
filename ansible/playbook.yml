@@ -16,12 +16,11 @@
         state: started
         enabled: yes
         
-    - name: Install pip and passlib
+    - name: Install passlib for the correct Python version
       become: yes
       shell: |
-        apt-get update -y
-        apt-get install -y python3-pip
-        pip3 install passlib
+        python3 -m pip install passlib
+
 
     - name: Create users
       loop: "{{ users }}"
