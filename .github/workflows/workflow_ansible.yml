@@ -24,10 +24,10 @@ jobs:
       run: |
         sudo apt update && sudo apt install -y ansible
 
-    - name: Create Ansible Inventory
+    - name: Prepare Ansible Inventory
       run: |
-        echo "[servers]" > inventory.ini
-        echo "${{ secrets.INSTANCE_IP }} ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_rsa" >> inventory.ini
+        echo "[servers]" > ../ansible/inventory.ini
+        echo "$INSTANCE_IP ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_rsa" >> ../ansible/inventory.ini
 
     - name: Run Ansible Playbook
       run: |
