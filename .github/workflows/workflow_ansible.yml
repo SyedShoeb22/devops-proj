@@ -19,7 +19,12 @@ jobs:
         chmod 600 ~/.ssh/id_rsa
         ssh-keygen -y -f ~/.ssh/id_rsa > ~/.ssh/id_rsa.pub
         echo -e "Host *\n\tStrictHostKeyChecking no\n\tUserKnownHostsFile=/dev/null\n" > ~/.ssh/config
-
+        
+    - name: Generate inventory.ini
+      run: |
+        chmod +x generate_inventory.sh
+        ./generate_inventory.sh
+      
     - name: Install Ansible
       run: |
         sudo apt update && sudo apt install -y ansible
