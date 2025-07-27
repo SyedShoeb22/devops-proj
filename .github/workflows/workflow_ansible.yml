@@ -20,10 +20,10 @@ jobs:
         ssh-keygen -y -f ~/.ssh/id_rsa > ~/.ssh/id_rsa.pub
         echo -e "Host *\n\tStrictHostKeyChecking no\n\tUserKnownHostsFile=/dev/null\n" > ~/.ssh/config
         
-    - name: Generate inventory.ini
+    - name: Prepare Ansible Inventory
       run: |
-        chmod +x generate_inventory.sh
-        ./generate_inventory.sh
+        echo "[servers]" > ./ansible/inventory.ini
+        echo "$INSTANCE_IP ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_rsa" >> ./ansible/inventory.ini
       
     - name: Install Ansible
       run: |
