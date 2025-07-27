@@ -23,24 +23,22 @@ jobs:
       uses: hashicorp/setup-terraform@v3
       with:
         terraform_version: 1.6.6
-        
-    - name: Debug JSON file format
-      run: |
-        echo "Contents of gcp-creds.json:"
-        cat gcp-creds.json
 
     - name: Save GCP credentials JSON safely
       run: |
         echo '${{ secrets.GOOGLE_CREDENTIALS }}' > gcp-creds.json
       env:
         GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-
+        
+    - name: Debug JSON file format
+      run: |
+        echo "Contents of gcp-creds.json:"
+        cat gcp-creds.json
 
     - name: Terraform Init & Apply
       run: |
         terraform init
         terraform apply -auto-approve -var="gcp_credentials_file=gcp-creds.json"
-
       env:
         GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
