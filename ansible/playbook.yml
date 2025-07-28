@@ -36,7 +36,7 @@
 
     - name: Parse users from CSV
       set_fact:
-        users: "{{ user_csv.content | b64decode | splitlines }}"
+        user_lines: "{{ user_csv.content | b64decode | split('\n') }}"
 
     - name: Create users
       loop: "{{ users }}"
