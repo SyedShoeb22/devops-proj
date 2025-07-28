@@ -1,6 +1,11 @@
 - hosts: servers
   become: yes
 
+  vars:
+    users:
+      - { username: "alice", password: "alice123", email: "syedshoeb8380@gmail.com" }
+      - { username: "bob", password: "bob456", email: "syedabrar7757@gmail.com" }
+
   tasks:
 
     - name: Install Docker
@@ -15,52 +20,34 @@
         state: started
         enabled: yes
 
-    - name: Copy hashed-users.csv to VM
-      copy:
-        src: hashed-users.csv
-        dest: /tmp/hashed-users.csv
-
-    - name: Read users from CSV file
-      community.general.read_csv:
-        path: /tmp/hashed-users.csv
-      register: users_csv
-
-    - name: Set user lines
-      set_fact:
-        user_lines: "{{ users_csv.list }}"
-
-    - name: Create users
-      loop: "{{ user_lines }}"
-      vars:
-        user_data: "{{ item }}"
+    - name: Create users with hashed passwords
+      loop: "{{ users }}"
+      loop_control:
+        label: "{{ item.username }}"
       user:
-        name: "{{ user_data.username }}"
-        password: "{{ user_data.password }}"
+        name: "{{ item.username }}"
+        password: "{{ item.password | password_hash('sha512') }}"
         shell: /bin/bash
         create_home: yes
 
     - name: Add users to docker group
-      loop: "{{ user_lines }}"
-      vars:
-        user_data: "{{ item }}"
+      loop: "{{ users }}"
       user:
-        name: "{{ user_data.username }}"
+        name: "{{ item.username }}"
         groups: docker
         append: yes
 
     - name: Send email with credentials
-      loop: "{{ user_lines }}"
-      vars:
-        user_data: "{{ item }}"
+      loop: "{{ users }}"
       mail:
         subject: "Your Account on {{ inventory_hostname }}"
-        to: "{{ user_data.email }}"
+        to: "{{ item.email }}"
         body: |
-          Hello {{ user_data.username }},
+          Hello {{ item.username }},
 
           Your account has been created on {{ inventory_hostname }}.
-          Username: {{ user_data.username }}
-          Password: {{ user_data.password }}
+          Username: {{ item.username }}
+          Password: {{ item.password }}
 
           Thanks,
           Admin
