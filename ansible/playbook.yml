@@ -3,8 +3,8 @@
 
   vars:
     users:
-      - { username: "alice", password: "alice123", email: "syedshoeb8380@gmail.com" }
-      - { username: "bob", password: "bob456", email: "syedabrar7757@gmail.com" }
+      - { username: "shoeb", password: "shoeb123", email: "syedshoeb8380@gmail.com" }
+      - { username: "abrar", password: "abrar123", email: "syedabrar7757@gmail.com" }
 
   tasks:
 
