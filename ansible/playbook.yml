@@ -49,27 +49,6 @@
         groups: sudo
         append: yes
       loop: "{{ users }}"
-      
-    - name: Enable PasswordAuthentication in sshd_config
-      lineinfile:
-        path: /etc/ssh/sshd_config
-        regexp: '^#?PasswordAuthentication'
-        line: 'PasswordAuthentication yes'
-        state: present
-        backrefs: yes
-
-    - name: Enable KbdInteractiveAuthentication in sshd_config
-      lineinfile:
-        path: /etc/ssh/sshd_config
-        regexp: '^#?KbdInteractiveAuthentication'
-        line: 'KbdInteractiveAuthentication yes'
-        state: present
-        backrefs: yes
-
-    - name: Restart SSH service
-      service:
-        name: ssh
-        state: restarted
 
     - name: Pull PySpark notebook Docker image
       docker_image:
