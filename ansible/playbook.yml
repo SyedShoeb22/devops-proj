@@ -3,8 +3,12 @@
 
   vars:
     users:
-      - { username: "shoeb", password: "shoeb123", email: "syedshoeb8380@gmail.com" }
-      - { username: "abrar", password: "abrar123", email: "syedabrar7757@gmail.com" }
+      - username: shoeb
+        password: shoeb123
+        email: syedshoeb8380@gmail.com
+      - username: abrar
+        password: abrar123
+        email: syedabrar7757@gmail.com
 
   tasks:
 
@@ -22,37 +26,42 @@
 
     - name: Create users with plain text passwords
       loop: "{{ users }}"
-      loop_control:
-        label: "{{ item.username }}"
-      shell: |
-        useradd -m -s /bin/bash {{ item.username }}
-        echo "{{ item.username }}:{{ item.password }}" | chpasswd
-      args:
-        executable: /bin/bash
+      vars:
+        user_data: "{{ item }}"
+      user:
+        name: "{{ user_data.username }}"
+        password: "{{ user_data.password | password_hash('sha512') }}"
+        shell: /bin/bash
+        create_home: yes
 
     - name: Add users to docker group
       loop: "{{ users }}"
+      vars:
+        user_data: "{{ item }}"
       user:
-        name: "{{ item.username }}"
+        name: "{{ user_data.username }}"
         groups: docker
         append: yes
 
     - name: Send email with credentials
       loop: "{{ users }}"
+      vars:
+        user_data: "{{ item }}"
       mail:
         subject: "Your Account on {{ inventory_hostname }}"
-        to: "{{ item.email }}"
+        to: "{{ user_data.email }}"
         body: |
-          Hello {{ item.username }},
+          Hello {{ user_data.username }},
 
           Your account has been created on {{ inventory_hostname }}.
-          Username: {{ item.username }}
-          Password: {{ item.password }}
+          Username: {{ user_data.username }}
+          Password: {{ user_data.password }}
 
           Thanks,
           Admin
         from: "shoeb.corporate@gmail.com"
-        smtp_host: smtp.gmail.com
-        smtp_port: 587
-        smtp_user: "{{ lookup('env', 'SMTP_USER') }}"
-        smtp_password: "{{ lookup('env', 'SMTP_PASS') }}"
+        host: smtp.gmail.com
+        port: 587
+        username: "{{ lookup('env', 'SMTP_USER') }}"
+        password: "{{ lookup('env', 'SMTP_PASS') }}"
+        secure: starttls
