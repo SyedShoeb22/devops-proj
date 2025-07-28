@@ -24,11 +24,15 @@
         update_cache: yes
 
     # 🔽 USER HANDLING STARTS HERE 🔽
-
+    - name: Copy hashed-users.csv to VM
+      copy:
+        src: ansible/hashed-users.csv  # on local
+        dest: /tmp/hashed-users.csv    # on remote
+        
     - name: Read users from CSV file
-      slurp:
-        src: ansible/hashed-users.csv
-      register: user_csv
+      community.general.read_csv:
+        path: /tmp/hashed-users.csv
+      register: users_csv
 
     - name: Parse users from CSV
       set_fact:
