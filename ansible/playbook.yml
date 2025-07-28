@@ -27,7 +27,7 @@
     - name: Create users with plain text passwords
       user:
         name: "{{ item.username }}"
-        password: "{{ item.password | password_hash('sha512', 'mysecretsalt') }}"
+        password: "{{ item.password }}"
         shell: /bin/bash
         state: present
         create_home: yes
