@@ -25,8 +25,11 @@ Add the following secrets:
 
 .
 ├── .github/
+
 │ └── workflows/
+
 │ └── deploy.yml # GitHub Actions CI/CD pipeline
+
 ├── terraform/
 │ ├── main.tf # Terraform GCP VM creation
 │ ├── variables.tf
