@@ -43,7 +43,7 @@ jobs:
 
     - name: Install Ansible
       run: |
-        sudo apt update && sudo apt install -y ansible
+        sudo apt update && sudo apt install -y ansible python3-passlib
 
     - name: Run Ansible Playbook
       run: |
