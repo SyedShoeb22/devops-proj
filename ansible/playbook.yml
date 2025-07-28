@@ -1,7 +1,9 @@
 - hosts: servers
   become: yes
+
   vars:
-    users: "{{ lookup('file', 'users.csv').splitlines() }}"
+    # This will hold processed user lines like ["user1,password1,email1", ...]
+    users: []
 
   tasks:
 
@@ -20,32 +22,17 @@
     - name: Ensure apt cache is updated
       apt:
         update_cache: yes
-      become: yes
 
-    - name: Install pip for Python 3.10 (via apt if needed)
-      apt:
-        name: python3.10-venv
-        state: present
-      become: yes
+    # 🔽 USER HANDLING STARTS HERE 🔽
 
-    - name: Ensure pip is installed in Python 3.10
-      command: /usr/bin/python3.10 -m ensurepip --upgrade
-      become: yes
-      ignore_errors: true  # In case ensurepip isn't available
+    - name: Read users from CSV file
+      slurp:
+        src: users.csv
+      register: user_csv
 
-    - name: Manually install pip for Python 3.10
-      shell: |
-        curl -sS https://bootstrap.pypa.io/get-pip.py | /usr/bin/python3.10
-      args:
-        executable: /bin/bash
-      become: yes
-      when: ansible_facts.packages['python3.10-venv'] is defined
-
-    - name: Install passlib using pip for Python 3.10
-      pip:
-        name: passlib
-        executable: /usr/bin/python3.10 -m pip
-      become: yes
+    - name: Parse users from CSV
+      set_fact:
+        users: "{{ user_csv.content | b64decode | splitlines }}"
 
     - name: Create users
       loop: "{{ users }}"
@@ -57,28 +44,28 @@
         shell: /bin/bash
         create_home: yes
 
-    - name: Add user to docker group
+    - name: Add users to docker group
       loop: "{{ users }}"
       vars:
-        username: "{{ item.split(',')[0] }}"
+        user_data: "{{ item.split(',') }}"
       user:
-        name: "{{ username }}"
+        name: "{{ user_data[0] }}"
         groups: docker
         append: yes
 
     - name: Send email with credentials
       loop: "{{ users }}"
       vars:
-        u: "{{ item.split(',') }}"
+        user_data: "{{ item.split(',') }}"
       mail:
         subject: "Your Account on {{ inventory_hostname }}"
-        to: "{{ u[2] }}"
+        to: "{{ user_data[2] }}"
         body: |
-          Hello {{ u[0] }},
+          Hello {{ user_data[0] }},
 
           Your account has been created on {{ inventory_hostname }}.
-          Username: {{ u[0] }}
-          Password: {{ u[1] }}
+          Username: {{ user_data[0] }}
+          Password: {{ user_data[1] }}
 
           Thanks,
           Admin
