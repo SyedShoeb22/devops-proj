@@ -16,10 +16,22 @@
         state: started
         enabled: yes
         
-    - name: Install passlib for the correct Python version
+    - name: Install dependencies and passlib
+      hosts: all
       become: yes
-      shell: |
-        python3 -m pip install passlib
+      tasks:
+        - name: Ensure Python 3 and pip are installed
+          apt:
+            name:
+              - python3
+              - python3-pip
+            update_cache: yes
+            state: present
+    
+        - name: Install passlib
+          pip:
+            name: passlib
+            executable: pip3
 
 
     - name: Create users
