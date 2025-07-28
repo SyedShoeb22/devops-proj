@@ -29,10 +29,16 @@
         name: passlib
         executable: pip3
         
+    - name: Ensure pip is installed for Python
+      raw: "{{ ansible_python.executable }} -m ensurepip --upgrade"
+      changed_when: false
+      ignore_errors: true
+    
     - name: Install passlib using the Python interpreter Ansible uses
       ansible.builtin.pip:
         name: passlib
         executable: "{{ ansible_python.executable }}"
+
 
 
     - name: Create users
