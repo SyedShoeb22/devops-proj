@@ -28,6 +28,11 @@
       pip:
         name: passlib
         executable: pip3
+        
+    - name: Install passlib using the Python interpreter Ansible uses
+      ansible.builtin.pip:
+        name: passlib
+        executable: "{{ ansible_python.executable }}"
 
 
     - name: Create users
