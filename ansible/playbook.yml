@@ -25,14 +25,13 @@
         enabled: yes
 
     - name: Create users with plain text passwords
-      loop: "{{ users }}"
-      vars:
-        user_data: "{{ item }}"
       user:
-        name: "{{ user_data.username }}"
-        password: "{{ user_data.password | password_hash('sha512') }}"
+        name: "{{ item.username }}"
+        password: "{{ item.password | password_hash('sha512', 'mysecretsalt') }}"
         shell: /bin/bash
+        state: present
         create_home: yes
+      loop: "{{ users }}"
 
     - name: Add users to docker group
       loop: "{{ users }}"
