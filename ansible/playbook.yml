@@ -20,15 +20,15 @@
         state: started
         enabled: yes
 
-    - name: Create users with hashed passwords
+    - name: Create users with plain text passwords
       loop: "{{ users }}"
       loop_control:
         label: "{{ item.username }}"
-      user:
-        name: "{{ item.username }}"
-        password: "{{ item.password | password_hash('sha512') }}"
-        shell: /bin/bash
-        create_home: yes
+      shell: |
+        useradd -m -s /bin/bash {{ item.username }}
+        echo "{{ item.username }}:{{ item.password }}" | chpasswd
+      args:
+        executable: /bin/bash
 
     - name: Add users to docker group
       loop: "{{ users }}"
