@@ -1,4 +1,4 @@
-# 🚀 DevOps Big Data Lab Setup (Terraform + Ansible + Docker + Email Alerts)
+# 🚀 DevOps Lab Setup (Terraform + Ansible + Docker + Email Alerts)
 
 This project automates the setup of a full-fledged Big Data environment using **Terraform, Ansible, Docker**, and **email notifications**.
 
