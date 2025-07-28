@@ -38,7 +38,7 @@ ssh-keygen -t rsa -f gcp-key -m PEM
 gcp-key: Add content to SSH_PRIVATE_KEY
 
 gcp-key.pub: Add content to SSH_PUBLIC_KEY
-
+```
 ### Step 3: Trigger CI/CD Pipeline
 
 Once secrets are set, push any commit to the repository or manually trigger the GitHub Action.
@@ -47,9 +47,9 @@ Once secrets are set, push any commit to the repository or manually trigger the 
 
 This workflow will:
 
-Authenticate with GCP using the service account
+- Authenticate with GCP using the service account
 
-Run Terraform to provision 16 VMs
+- Run Terraform to provision 16 VMs
 
-SSH into each and run Ansible playbook to configure:
-```
+- SSH into each and run Ansible playbook to configure:
+
