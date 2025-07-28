@@ -24,6 +24,7 @@ Add the following secrets:
 ## 📁 Project Structure
 
 .
+
 ├── .github/
 
 │ └── workflows/
@@ -31,16 +32,27 @@ Add the following secrets:
 │ └── deploy.yml # GitHub Actions CI/CD pipeline
 
 ├── terraform/
+
 │ ├── main.tf # Terraform GCP VM creation
+
 │ ├── variables.tf
+
 │ └── outputs.tf
+
 ├── ansible/
+
 │ ├── inventory.ini
+
 │ ├── playbook.yml # Installs Hadoop, Hive, HBase, etc.
+
 │ └── group_vars/
+
 │ └── all.yml # Contains user credentials (encrypted or hashed)
+
 ├── scripts/
+
 │ └── send_email.py # Optional script for sending credentials
+
 └── README.md
 
 ## ✅ How to Use
