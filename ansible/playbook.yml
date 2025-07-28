@@ -4,6 +4,7 @@
     users: "{{ lookup('file', 'users.csv').splitlines() }}"
 
   tasks:
+
     - name: Install Docker
       apt:
         name: docker.io
@@ -15,36 +16,36 @@
         name: docker
         state: started
         enabled: yes
-        
+
     - name: Ensure apt cache is updated
       apt:
         update_cache: yes
       become: yes
-    
+
     - name: Install pip for Python 3.10 (via apt if needed)
       apt:
         name: python3.10-venv
         state: present
       become: yes
-    
+
     - name: Ensure pip is installed in Python 3.10
       command: /usr/bin/python3.10 -m ensurepip --upgrade
       become: yes
       ignore_errors: true  # In case ensurepip isn't available
-      
+
     - name: Manually install pip for Python 3.10
       shell: |
         curl -sS https://bootstrap.pypa.io/get-pip.py | /usr/bin/python3.10
       args:
         executable: /bin/bash
       become: yes
+      when: ansible_facts.packages['python3.10-venv'] is defined
 
     - name: Install passlib using pip for Python 3.10
       pip:
         name: passlib
         executable: /usr/bin/python3.10 -m pip
       become: yes
-
 
     - name: Create users
       loop: "{{ users }}"
@@ -74,7 +75,7 @@
         to: "{{ u[2] }}"
         body: |
           Hello {{ u[0] }},
-          
+
           Your account has been created on {{ inventory_hostname }}.
           Username: {{ u[0] }}
           Password: {{ u[1] }}
