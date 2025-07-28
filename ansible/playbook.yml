@@ -1,10 +1,6 @@
 - hosts: servers
   become: yes
 
-  vars:
-    # This will hold processed user lines like ["user1,password1,email1", ...]
-    users: []
-
   tasks:
 
     - name: Install Docker
@@ -19,57 +15,52 @@
         state: started
         enabled: yes
 
-    - name: Ensure apt cache is updated
-      apt:
-        update_cache: yes
-
-    # 🔽 USER HANDLING STARTS HERE 🔽
     - name: Copy hashed-users.csv to VM
       copy:
-        src: hashed-users.csv  # on local
-        dest: /tmp/hashed-users.csv    # on remote
-        
+        src: hashed-users.csv
+        dest: /tmp/hashed-users.csv
+
     - name: Read users from CSV file
       community.general.read_csv:
         path: /tmp/hashed-users.csv
       register: users_csv
 
-    - name: Parse users from CSV
+    - name: Set user lines
       set_fact:
-        user_lines: "{{ user_csv.content | b64decode | split('\n') }}"
+        user_lines: "{{ users_csv.list }}"
 
     - name: Create users
-      loop: "{{ users }}"
+      loop: "{{ user_lines }}"
       vars:
-        user_data: "{{ item.split(',') }}"
+        user_data: "{{ item }}"
       user:
-        name: "{{ user_data[0] }}"
-        password: "{{ user_data[1] | password_hash('sha512') }}"
+        name: "{{ user_data.username }}"
+        password: "{{ user_data.password }}"
         shell: /bin/bash
         create_home: yes
 
     - name: Add users to docker group
-      loop: "{{ users }}"
+      loop: "{{ user_lines }}"
       vars:
-        user_data: "{{ item.split(',') }}"
+        user_data: "{{ item }}"
       user:
-        name: "{{ user_data[0] }}"
+        name: "{{ user_data.username }}"
         groups: docker
         append: yes
 
     - name: Send email with credentials
-      loop: "{{ users }}"
+      loop: "{{ user_lines }}"
       vars:
-        user_data: "{{ item.split(',') }}"
+        user_data: "{{ item }}"
       mail:
         subject: "Your Account on {{ inventory_hostname }}"
-        to: "{{ user_data[2] }}"
+        to: "{{ user_data.email }}"
         body: |
-          Hello {{ user_data[0] }},
+          Hello {{ user_data.username }},
 
           Your account has been created on {{ inventory_hostname }}.
-          Username: {{ user_data[0] }}
-          Password: {{ user_data[1] }}
+          Username: {{ user_data.username }}
+          Password: {{ user_data.password }}
 
           Thanks,
           Admin
