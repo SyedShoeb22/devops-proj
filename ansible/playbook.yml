@@ -27,7 +27,7 @@
 
     - name: Read users from CSV file
       slurp:
-        src: users.csv
+        src: hashed-users.csv
       register: user_csv
 
     - name: Parse users from CSV
