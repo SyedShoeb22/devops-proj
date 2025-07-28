@@ -49,7 +49,5 @@ This workflow will:
 
 - Authenticate with GCP using the service account
 
-- Run Terraform to provision 16 VMs
-
 - SSH into each and run Ansible playbook to configure:
 
