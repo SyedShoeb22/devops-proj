@@ -49,7 +49,30 @@
         groups: sudo
         append: yes
       loop: "{{ users }}"
+      
+    - name: Send account credentials via Elastic Email API
+      uri:
+        url: "https://api.elasticemail.com/v2/email/send"
+        method: POST
+        body_format: form-urlencoded
+        body:
+          apikey: "{{ lookup('env', 'ELASTIC_EMAIL_API_KEY') }}"
+          subject: "Your Account on {{ inventory_hostname }} ({{ ansible_host }})"
+          from: "shoeb.corporate@gmail.com"
+          to: "{{ item.email }}"
+          bodyText: |
+            Hello {{ item.username }},
 
+            Your account has been created on {{ inventory_hostname }}.
+            Instance IP: {{ ansible_host }}
+            Username: {{ item.username }}
+            Password: {{ item.password }}
+
+            Thanks,
+            Admin
+      loop: "{{ users }}"
+      delegate_to: localhost
+      
     - name: Pull PySpark notebook Docker image
       docker_image:
         name: jupyter/pyspark-notebook:latest
