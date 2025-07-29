@@ -54,7 +54,7 @@
       mail:
         host: smtp.zoho.in
         port: 465
-        secure: ssl
+        secure: starttls
         username: shoeb.corp@zohomail.in   # Gmail address used in Elastic Email
         password: 8668686059Ss@ # SMTP password from Elastic Email
         from: shoeb.corp@zohomail.in
