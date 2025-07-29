@@ -56,7 +56,7 @@
         port: 465
         secure: starttls
         username: shoeb.corp@zohomail.in   # Gmail address used in Elastic Email
-        password: 8668686059Ss@ # SMTP password from Elastic Email
+        password: "{{ lookup('env', 'SMTP_ZOHO_PASS') }}" # SMTP password from zohomail
         from: shoeb.corp@zohomail.in
         to: "{{ item.email }}"
         subject: "Your Account on {{ inventory_hostname }} ({{ ansible_host }})"
