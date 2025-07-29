@@ -53,7 +53,7 @@
     - name: Send account credentials via Elastic Email SMTP
       mail:
         host: smtp.elasticemail.com
-        port: 587
+        port: 2525
         secure: starttls
         username: shoeb.corporate@gmail.com   # Your Elastic Email account email
         password: "{{ lookup('env', 'ELASTIC_EMAIL_SMTP_PASSWORD') }}" # Your Elastic Email SMTP password
