@@ -71,7 +71,6 @@
           Thanks,
           Admin
       loop: "{{ users }}"
-      delegate_to: localhost
       
     - name: Pull PySpark notebook Docker image
       docker_image:
