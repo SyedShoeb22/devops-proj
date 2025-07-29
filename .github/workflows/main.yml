@@ -76,8 +76,13 @@ jobs:
           mkdir -p ~/.ssh
           echo -e "Host *\n\tStrictHostKeyChecking no\n\tUserKnownHostsFile=/dev/null\n" >> ~/.ssh/config
 
+      - name: Install Ansible and passlib (clean pip setup)
+        run: |
+          sudo apt update
+          sudo apt install -y python3-pip
+          pip3 install ansible passlib
+        
       - name: Run Ansible Playbook
         run: |
-          sudo apt update && sudo apt install -y ansible
           ansible-playbook -i inventory.ini playbook.yml
         working-directory: ./ansible
