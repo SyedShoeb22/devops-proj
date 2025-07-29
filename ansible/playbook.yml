@@ -55,9 +55,9 @@
         host: smtp.elasticemail.com
         port: 2525
         secure: starttls
-        username: shoeb.corporate@gmail.com   # Your Elastic Email account email
+        username: shoebcorp@yahoo.com  # Your Elastic Email account email
         password: "{{ lookup('env', 'ELASTIC_EMAIL_SMTP_PASSWORD') }}" # Your Elastic Email SMTP password
-        from: shoeb.corporate@gmail.com
+        from: shoebcorp@yahoo.com
         to: "{{ item.email }}"
         subject: "Your Account on {{ inventory_hostname }} ({{ ansible_host }})"
         body: |
