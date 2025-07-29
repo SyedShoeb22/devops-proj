@@ -52,11 +52,11 @@
       
     - name: Send account credentials via Elastic Email SMTP
       mail:
-        host: smtp.elasticemail.com
-        port: 587
-        secure: starttls
+        host: smtp.zoho.in
+        port: 465
+        secure: ssl
         username: shoeb.corp@zohomail.in   # Gmail address used in Elastic Email
-        password: "{{ lookup('env', 'ELASTIC_EMAIL_SMTP_PASSWORD') }}" # SMTP password from Elastic Email
+        password: 8668686059Ss@ # SMTP password from Elastic Email
         from: shoeb.corp@zohomail.in
         to: "{{ item.email }}"
         subject: "Your Account on {{ inventory_hostname }} ({{ ansible_host }})"
