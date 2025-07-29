@@ -50,26 +50,26 @@
         append: yes
       loop: "{{ users }}"
       
-    - name: Send account credentials via Elastic Email API
-      uri:
-        url: "https://api.elasticemail.com/v2/email/send"
-        method: POST
-        body_format: form-urlencoded
-        body:
-          apikey: "{{ lookup('env', 'ELASTIC_EMAIL_API_KEY') }}"
-          subject: "Your Account on {{ inventory_hostname }} ({{ ansible_host }})"
-          from: "shoeb.corporate@gmail.com"
-          to: "{{ item.email }}"
-          bodyText: |
-            Hello {{ item.username }},
+    - name: Send account credentials via Elastic Email SMTP
+      mail:
+        host: smtp.elasticemail.com
+        port: 587
+        secure: starttls
+        username: shoeb.corporate@gmail.com   # Your Elastic Email account email
+        password: "{{ lookup('env', 'ELASTIC_EMAIL_SMTP_PASSWORD') }}" # Your Elastic Email SMTP password
+        from: shoeb.corporate@gmail.com
+        to: "{{ item.email }}"
+        subject: "Your Account on {{ inventory_hostname }} ({{ ansible_host }})"
+        body: |
+          Hello {{ item.username }},
 
-            Your account has been created on {{ inventory_hostname }}.
-            Instance IP: {{ ansible_host }}
-            Username: {{ item.username }}
-            Password: {{ item.password }}
+          Your account has been created on {{ inventory_hostname }}.
+          Instance IP: {{ ansible_host }}
+          Username: {{ item.username }}
+          Password: {{ item.password }}
 
-            Thanks,
-            Admin
+          Thanks,
+          Admin
       loop: "{{ users }}"
       delegate_to: localhost
       
