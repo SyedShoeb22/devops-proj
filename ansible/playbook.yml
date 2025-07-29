@@ -6,13 +6,13 @@
   vars:
     users:
       - username: shoeb
-        password: "$6$H5OIC/dYaWs9CeIm$Z9C1P8/3iHu2v7Ent2zGiuM2LRxN4otIcx1q7HwuTgAjzmbsBPN5kjuNjoU1SWCBjzPbhttkhNgki8.EAQA4E1"
+        password: "Shoeb@123"
         email: syedshoeb8380@gmail.com
         sudoPass: shoeb123
       - username: abrar
         password: "$6$AJxuHT.47WKkC6af$9MelO.iWFz8RZLBXz9gYcFWi0v.qGxN/tG1uFnVg5p1mm0jdhgfqEclyZ8N34MHTEEa5E92o/zx1E05VVf8ut1"
         email: syedabrar7757@gmail.com
-        sudoPass: abrar123
+        sudoPass: "Abrar@123"
     notebook_dir: /opt/notebooks
 
   tasks:
