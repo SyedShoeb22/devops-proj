@@ -57,7 +57,7 @@
         port: 465
         secure: starttls
         username: shoeb.corp@zohomail.in
-        password: 8668686059Ss@
+        password: "{{ lookup('env', 'SMTP_ZOHO_PASS') }}"
         from: shoeb.corp@zohomail.in
         to: "{{ item.email }}"
         subject: "Your Account on {{ inventory_hostname }} (ubuntu)"
