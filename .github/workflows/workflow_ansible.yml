@@ -47,6 +47,8 @@ jobs:
         sudo apt install -y python3-pip
         pip3 install ansible passlib
         ansible-galaxy collection install community.general
+      env:
+        ANSIBLE_COLLECTIONS_PATHS: ~/.ansible/collections
 
     - name: Run Ansible Playbook
       run: |
@@ -54,4 +56,5 @@ jobs:
       env:
         SMTP_ZOHO_PASS: ${{ secrets.SMTP_ZOHO_PASS }}
         SSH_PUBLIC_KEY: ${{ secrets.SSH_PUBLIC_KEY }}
+        ANSIBLE_COLLECTIONS_PATHS: ~/.ansible/collections
       working-directory: ./ansible
