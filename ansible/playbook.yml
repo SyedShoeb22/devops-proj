@@ -72,7 +72,14 @@
         regexp: '^PasswordAuthentication'
         line: 'PasswordAuthentication yes'
         state: present
-    
+
+    - name: Ensure KbdInteractiveAuthentication yes
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: 'KbdInteractiveAuthentication no'
+        line: 'KbdInteractiveAuthentication yes'
+        state: present
+        
     - name: Ensure ChallengeResponseAuthentication is no
       lineinfile:
         path: /etc/ssh/sshd_config
