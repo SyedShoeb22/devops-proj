@@ -45,13 +45,11 @@
         mode: '0700'
       loop: "{{ users }}"
 
-    - name: Copy SSH public key for users
-      copy:
-        src: "~/.ssh/id_rsa.pub"
-        dest: "/home/{{ item.username }}/.ssh/authorized_keys"
-        owner: "{{ item.username }}"
-        group: "{{ item.username }}"
-        mode: '0600'
+    - name: Ensure SSH public key is installed
+      authorized_key:
+        user: "{{ item.username }}"
+        state: present
+        key: "{{ ssh_public_key }}"
       loop: "{{ users }}"
       
     - name: Add users to docker group
