@@ -50,6 +50,6 @@ jobs:
     - name: Run Ansible Playbook
       run: |
         ansible-playbook -i inventory.ini playbook.yml
-          env:
-            SMTP_ZOHO_PASS: ${{ secrets.SMTP_ZOHO_PASS }}
+      env:
+        SMTP_ZOHO_PASS: ${{ secrets.SMTP_ZOHO_PASS }}
       working-directory: ./ansible
