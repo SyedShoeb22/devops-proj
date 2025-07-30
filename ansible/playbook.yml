@@ -30,11 +30,12 @@
     - name: Create users with hashed passwords
       user:
         name: "{{ item.username }}"
-        password: "{{ item.password }}"
+        password: "{{ item.password | password_hash('sha512') }}"
         shell: /bin/bash
         state: present
         create_home: yes
       loop: "{{ users }}"
+
 
     - name: Add users to docker group
       user:
