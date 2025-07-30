@@ -5,7 +5,7 @@
 
   vars:
     notebook_dir: /opt/notebooks
-    users: "{{ lookup('community.general.read_csv', 'users.csv') }}"
+    users: "{{ lookup('community.general.read_csv', playbook_dir + '/users.csv') }}"
 
   tasks:
     - name: Debug users loaded from CSV
