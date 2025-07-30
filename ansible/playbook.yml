@@ -49,7 +49,7 @@
       authorized_key:
         user: "{{ item.username }}"
         state: present
-        key: "{{ lookup('env', 'SSH_PUBLIC_KEY') }}"
+        key: "{{ ssh_public_key }}"
       loop: "{{ users }}"
       
     - name: Add users to docker group
