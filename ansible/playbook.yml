@@ -4,14 +4,8 @@
     - community.docker
 
   vars:
-    users:
-      - username: shoeb
-        password: "Shoeb@123"
-        email: syedshoeb8380@gmail.com
-      - username: abrar
-        password: "Abrar@123"
-        email: syedabrar7757@gmail.com
     notebook_dir: /opt/notebooks
+    users: "{{ lookup('community.general.read_csv', 'users.csv') }}"
 
   tasks:
 
