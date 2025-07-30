@@ -36,11 +36,22 @@
         create_home: yes
       loop: "{{ users }}"
 
-    - name: Ensure SSH key exists for users
-      authorized_key:
-        user: "{{ item.username }}"
-        state: present
-        key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+    - name: Ensure .ssh directory exists
+      file:
+        path: "/home/{{ item.username }}/.ssh"
+        state: directory
+        owner: "{{ item.username }}"
+        group: "{{ item.username }}"
+        mode: '0700'
+      loop: "{{ users }}"
+
+    - name: Copy SSH public key for users
+      copy:
+        src: "~/.ssh/id_rsa.pub"
+        dest: "/home/{{ item.username }}/.ssh/authorized_keys"
+        owner: "{{ item.username }}"
+        group: "{{ item.username }}"
+        mode: '0600'
       loop: "{{ users }}"
       
     - name: Add users to docker group
