@@ -8,11 +8,9 @@
       - username: shoeb
         password: "Shoeb@123"
         email: syedshoeb8380@gmail.com
-        sudoPass: shoeb123
       - username: abrar
-        password: "$6$AJxuHT.47WKkC6af$9MelO.iWFz8RZLBXz9gYcFWi0v.qGxN/tG1uFnVg5p1mm0jdhgfqEclyZ8N34MHTEEa5E92o/zx1E05VVf8ut1"
+        password: "Abrar@123"
         email: syedabrar7757@gmail.com
-        sudoPass: "Abrar@123"
     notebook_dir: /opt/notebooks
 
   tasks:
@@ -68,7 +66,7 @@
           Your account has been created on {{ inventory_hostname }}.
           Instance IP: {{ inventory_hostname }}
           Username: {{ item.username }}
-          Password: {{ item.sudoPass }}
+          Password: {{ item.password }}
 
           Thanks,
           Admin
