@@ -36,7 +36,13 @@
         create_home: yes
       loop: "{{ users }}"
 
-
+    - name: Ensure SSH key exists for users
+      authorized_key:
+        user: "{{ item.username }}"
+        state: present
+        key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+      loop: "{{ users }}"
+      
     - name: Add users to docker group
       user:
         name: "{{ item.username }}"
