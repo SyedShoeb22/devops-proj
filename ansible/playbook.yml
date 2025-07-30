@@ -8,7 +8,10 @@
     users: "{{ lookup('community.general.read_csv', 'users.csv') }}"
 
   tasks:
-
+    - name: Debug users loaded from CSV
+      debug:
+        var: users
+  
     - name: Install Docker
       apt:
         name: docker.io
