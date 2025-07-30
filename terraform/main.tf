@@ -35,9 +35,11 @@ resource "google_compute_instance" "default" {
   }
 
 metadata = {
-  ssh-keys = "ubuntu:${file(var.ssh_public_key)}"
+  ssh-keys = <<EOT
+ubuntu:${file(var.ssh_public_key)}
+shoeb:${file(var.ssh_public_key)}
+EOT
 }
-
 
   # 🔑 IMPORTANT: Add 'ssh' tag so firewall rule applies
   tags = ["ssh"]
