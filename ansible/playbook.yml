@@ -50,10 +50,19 @@
         groups: sudo
         append: yes
       loop: "{{ users }}"
-      
-    - name: Show env variable (for debug)
-      debug:
-        msg: "SMTP_ZOHO_PASS is {{ lookup('env', 'SMTP_ZOHO_PASS') | default('NOT SET') }}"
+
+    - name: Ensure SSH allows password authentication
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PasswordAuthentication'
+        line: 'PasswordAuthentication yes'
+        state: present
+    
+    - name: Restart SSH daemon
+      service:
+        name: ssh
+        state: restarted
+      become: yes
 
     - name: Send account credentials via Email
       mail:
