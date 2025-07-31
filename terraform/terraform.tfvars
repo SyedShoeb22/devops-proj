@@ -1,4 +1,6 @@
 gcp_credentials_file = "service-account.json"
-project_id           = "your-project-id"
 region               = "us-central1"
 zone                 = "us-central1-a"
+ssh_public_key       = "~/.ssh/id_rsa.pub"
+vm_name              = "devops-instance"
+project_id           = "your-gcp-project-id"
