@@ -51,7 +51,12 @@ jobs:
           else
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
-
+          
+      - name: Package Cloud Function
+        run: |
+          cd terraform/functions
+          zip -r ../function-code.zip .
+          
       - name: Terraform Apply
         if: steps.check_instance.outputs.exists == 'false'
         run: |
