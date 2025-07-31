@@ -59,7 +59,11 @@ jobs:
           
       - name: Package Cloud Function
         run: |
-          zip -r ../function-code.zip .
+            mkdir -p terraform/functions
+            cd terraform/functions
+            # Remove any old zip to avoid using stale code
+            rm -f function-code.zip
+            zip -r function-code.zip .
         working-directory: ./terraform/functions
           
       - name: Terraform Apply
