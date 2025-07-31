@@ -46,9 +46,10 @@ jobs:
         sudo apt update
         sudo apt install -y python3-pip
         pip3 install ansible passlib
-        ansible-galaxy collection install community.general
+        mkdir -p /usr/share/ansible/collections
+        ansible-galaxy collection install community.general --collections-path /usr/share/ansible/collections
       env:
-        ANSIBLE_COLLECTIONS_PATHS: ~/.ansible/collections
+        ANSIBLE_COLLECTIONS_PATHS: /usr/share/ansible/collections
 
     - name: Run Ansible Playbook
       run: |
