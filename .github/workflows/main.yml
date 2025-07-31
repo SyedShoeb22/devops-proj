@@ -1,7 +1,12 @@
 name: 'Terraform + Ansible on GCP'
 
 on:
-  workflow_dispatch:
+    workflow_dispatch:
+      inputs:
+        branch:
+          description: 'Branch to run on'
+          required: true
+          default: 'cron-job'
 
 jobs:
   terraform:
