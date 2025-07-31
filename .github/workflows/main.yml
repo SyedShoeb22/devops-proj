@@ -59,8 +59,8 @@ jobs:
           
       - name: Package Cloud Function
         run: |
-          cd terraform/functions
           zip -r ../function-code.zip .
+        working-directory: ./terraform
           
       - name: Terraform Apply
         if: steps.check_instance.outputs.exists == 'false'
