@@ -3,9 +3,9 @@
   collections:
     - community.docker
 
-  vars:
-    notebook_dir: /opt/notebooks
-    users: "{{ lookup('community.general.read_csv', playbook_dir + '/users.csv') }}"
+  vars_files:
+    - users.yml
+
 
   tasks:
     - name: Debug users loaded from CSV
