@@ -81,11 +81,16 @@ jobs:
           sudo apt update
           sudo apt install -y python3-pip
           pip3 install ansible passlib
-        
+          mkdir -p /usr/share/ansible/collections
+          ansible-galaxy collection install community.general --collections-path /usr/share/ansible/collections
+        env:
+          ANSIBLE_COLLECTIONS_PATHS: /usr/share/ansible/collections
+  
       - name: Run Ansible Playbook
         run: |
           ansible-playbook -i inventory.ini playbook.yml --extra-vars "ssh_public_key='${SSH_PUBLIC_KEY}'"
         env:
           SMTP_ZOHO_PASS: ${{ secrets.SMTP_ZOHO_PASS }}
           SSH_PUBLIC_KEY: ${{ secrets.SSH_PUBLIC_KEY }}
+          ANSIBLE_COLLECTIONS_PATHS: ~/.ansible/collections
         working-directory: ./ansible
