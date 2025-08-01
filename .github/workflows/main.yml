@@ -61,6 +61,15 @@ jobs:
         run: |
             cd functions
             zip -r ../function-code.zip .
+            
+      - name: Delete existing Cloud Scheduler jobs
+        run: |
+            gcloud scheduler jobs delete start-9am --location=us-central1 --quiet || true
+            gcloud scheduler jobs delete stop-11am --location=us-central1 --quiet || true
+            gcloud scheduler jobs delete start-11-30 --location=us-central1 --quiet || true
+            gcloud scheduler jobs delete stop-2pm --location=us-central1 --quiet || true
+            gcloud scheduler jobs delete start-3pm --location=us-central1 --quiet || true
+            gcloud scheduler jobs delete delete-5pm --location=us-central1 --quiet || true
 
 
       - name: Terraform Apply
