@@ -59,13 +59,10 @@ jobs:
           
       - name: Package Cloud Function
         run: |
-            mkdir -p terraform/functions
-            cd terraform/functions
-            # Remove any old zip to avoid using stale code
-            rm -f function-code.zip
-            zip -r function-code.zip .
-        working-directory: ./terraform/functions
-          
+          cd terraform
+          zip -r function-code.zip functions
+
+
       - name: Terraform Apply
         if: steps.check_instance.outputs.exists == 'false'
         run: |
