@@ -1,8 +1,9 @@
+import os
 import googleapiclient.discovery
 
-PROJECT = "your-project-id"   # Replace
-ZONE = "us-central1-a"        # Replace
-INSTANCE = "devops-instance"  # Replace
+PROJECT = os.environ.get("PROJECT")
+ZONE = os.environ.get("ZONE")
+INSTANCE = os.environ.get("INSTANCE")
 
 def start_vm(request):
     compute = googleapiclient.discovery.build('compute', 'v1')
