@@ -122,7 +122,7 @@ resource "google_cloudfunctions_function" "delete_vm" {
 # ----------------------
 resource "google_cloud_scheduler_job" "start_9am" {
   name      = "start-9am"
-  schedule  = "0 3 * * *" # 9:00 AM IST
+  schedule  = "0 9 * * *" # 9:00 AM IST
   time_zone = "Asia/Kolkata"
 
   http_target {
@@ -133,7 +133,7 @@ resource "google_cloud_scheduler_job" "start_9am" {
 
 resource "google_cloud_scheduler_job" "stop_11am" {
   name      = "stop-11am"
-  schedule  = "30 5 * * *" # 11:00 AM IST
+  schedule  = "0 11 * * *" # 11:00 AM IST
   time_zone = "Asia/Kolkata"
 
   http_target {
@@ -144,7 +144,7 @@ resource "google_cloud_scheduler_job" "stop_11am" {
 
 resource "google_cloud_scheduler_job" "start_11_30" {
   name      = "start-11-30"
-  schedule  = "0 6 * * *" # 11:30 AM IST
+  schedule  = "30 11 * * *" # 11:30 AM IST
   time_zone = "Asia/Kolkata"
 
   http_target {
@@ -155,7 +155,7 @@ resource "google_cloud_scheduler_job" "start_11_30" {
 
 resource "google_cloud_scheduler_job" "stop_2pm" {
   name      = "stop-2pm"
-  schedule  = "30 8 * * *" # 2:00 PM IST
+  schedule  = "0 13 * * *" # 1:00 PM IST
   time_zone = "Asia/Kolkata"
 
   http_target {
@@ -166,7 +166,7 @@ resource "google_cloud_scheduler_job" "stop_2pm" {
 
 resource "google_cloud_scheduler_job" "start_3pm" {
   name      = "start-3pm"
-  schedule  = "30 9 * * *" # 3:00 PM IST
+  schedule  = "0 14 * * *" # 2:00 PM IST
   time_zone = "Asia/Kolkata"
 
   http_target {
@@ -177,7 +177,7 @@ resource "google_cloud_scheduler_job" "start_3pm" {
 
 resource "google_cloud_scheduler_job" "delete_5pm" {
   name      = "delete-5pm"
-  schedule  = "30 11 * * *" # 5:00 PM IST
+  schedule  = "0 17 * * *" # 5:00 PM IST
   time_zone = "Asia/Kolkata"
 
   http_target {
