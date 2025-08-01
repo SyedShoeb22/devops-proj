@@ -59,8 +59,8 @@ jobs:
           
       - name: Package Cloud Function
         run: |
-          cd terraform
-          zip -r function-code.zip functions
+            cd functions
+            zip -r ../function-code.zip .
 
 
       - name: Terraform Apply
