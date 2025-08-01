@@ -121,67 +121,81 @@ resource "google_cloudfunctions_function" "delete_vm" {
 # Cloud Scheduler Jobs
 # ----------------------
 resource "google_cloud_scheduler_job" "start_9am" {
-  name      = "start-9am"
-  schedule  = "0 9 * * *" # 9:00 AM IST
+  name     = "start-vm-9am"
+  schedule = "0 9 * * *"
   time_zone = "Asia/Kolkata"
-
   http_target {
+    uri        = google_cloudfunctions_function.start_vm.https_trigger_url
     http_method = "POST"
-    uri         = google_cloudfunctions_function.start_vm.https_trigger_url
   }
 }
 
 resource "google_cloud_scheduler_job" "stop_11am" {
-  name      = "stop-11am"
-  schedule  = "0 11 * * *" # 11:00 AM IST
+  name     = "stop-vm-11am"
+  schedule = "0 11 * * *"
   time_zone = "Asia/Kolkata"
-
   http_target {
+    uri        = google_cloudfunctions_function.stop_vm.https_trigger_url
     http_method = "POST"
-    uri         = google_cloudfunctions_function.stop_vm.https_trigger_url
   }
 }
 
-resource "google_cloud_scheduler_job" "start_11_30" {
-  name      = "start-11-30"
-  schedule  = "30 11 * * *" # 11:30 AM IST
+resource "google_cloud_scheduler_job" "start_1130am" {
+  name     = "start-vm-1130am"
+  schedule = "30 11 * * *"
   time_zone = "Asia/Kolkata"
-
   http_target {
+    uri        = google_cloudfunctions_function.start_vm.https_trigger_url
     http_method = "POST"
-    uri         = google_cloudfunctions_function.start_vm.https_trigger_url
   }
 }
 
-resource "google_cloud_scheduler_job" "stop_2pm" {
-  name      = "stop-2pm"
-  schedule  = "0 13 * * *" # 1:00 PM IST
+resource "google_cloud_scheduler_job" "stop_1pm" {
+  name     = "stop-vm-1pm"
+  schedule = "0 13 * * *"
   time_zone = "Asia/Kolkata"
-
   http_target {
+    uri        = google_cloudfunctions_function.stop_vm.https_trigger_url
     http_method = "POST"
-    uri         = google_cloudfunctions_function.stop_vm.https_trigger_url
   }
 }
 
-resource "google_cloud_scheduler_job" "start_3pm" {
-  name      = "start-3pm"
-  schedule  = "0 14 * * *" # 2:00 PM IST
+resource "google_cloud_scheduler_job" "start_2pm" {
+  name     = "start-vm-2pm"
+  schedule = "0 14 * * *"
   time_zone = "Asia/Kolkata"
-
   http_target {
+    uri        = google_cloudfunctions_function.start_vm.https_trigger_url
     http_method = "POST"
-    uri         = google_cloudfunctions_function.start_vm.https_trigger_url
+  }
+}
+
+resource "google_cloud_scheduler_job" "stop_330pm" {
+  name     = "stop-vm-330pm"
+  schedule = "30 15 * * *"
+  time_zone = "Asia/Kolkata"
+  http_target {
+    uri        = google_cloudfunctions_function.stop_vm.https_trigger_url
+    http_method = "POST"
+  }
+}
+
+resource "google_cloud_scheduler_job" "start_4pm" {
+  name     = "start-vm-4pm"
+  schedule = "0 16 * * *"
+  time_zone = "Asia/Kolkata"
+  http_target {
+    uri        = google_cloudfunctions_function.start_vm.https_trigger_url
+    http_method = "POST"
   }
 }
 
 resource "google_cloud_scheduler_job" "delete_5pm" {
-  name      = "delete-5pm"
-  schedule  = "0 17 * * *" # 5:00 PM IST
+  name     = "delete-vm-5pm"
+  schedule = "0 17 * * *"
   time_zone = "Asia/Kolkata"
-
   http_target {
+    uri        = google_cloudfunctions_function.delete_vm.https_trigger_url
     http_method = "POST"
-    uri         = google_cloudfunctions_function.delete_vm.https_trigger_url
   }
 }
