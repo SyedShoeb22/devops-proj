@@ -60,7 +60,7 @@ resource "google_storage_bucket" "functions" {
 resource "google_storage_bucket_object" "function_code" {
   name   = "function-code.zip"
   bucket = google_storage_bucket.functions.name
-  source = "${path.module}/functions/function-code.zip"
+  source = "${path.module}/function-code.zip"
 }
 
 # ----------------------
