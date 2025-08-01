@@ -71,6 +71,11 @@ jobs:
             gcloud scheduler jobs delete start-3pm --location=us-central1 --quiet || true
             gcloud scheduler jobs delete delete-5pm --location=us-central1 --quiet || true
 
+      - name: Cleanup old Cloud Functions
+        run: |
+            gcloud functions delete start-vm --region=us-central1 --quiet || true
+            gcloud functions delete stop-vm --region=us-central1 --quiet || true
+            gcloud functions delete delete-vm --region=us-central1 --quiet || true
 
       - name: Terraform Apply
         if: steps.check_instance.outputs.exists == 'false'
