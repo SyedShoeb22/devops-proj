@@ -2,7 +2,7 @@ name: 'Terraform + Ansible on GCP'
 
 on:
   schedule:
-    - cron: "*/2 * * * *"  # Every 5 minutes for testing
+    - cron: "*/5 * * * *"  # Every 5 minutes for testing
   workflow_dispatch:
 
 jobs:
