@@ -1,9 +1,8 @@
 name: 'Terraform + Ansible on GCP'
 
 on:
-  schedule:
-    - cron: "*/5 * * * *"  # Every 5 minutes for testing
-  workflow_dispatch:
+  repository_dispatch:
+    types: [trigger-vm-creation]
   
 jobs:
   terraform:
