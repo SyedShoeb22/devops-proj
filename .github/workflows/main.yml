@@ -2,13 +2,13 @@ name: 'Terraform + Ansible on GCP'
 
 on:
   schedule:
-    - cron: "59 12 * * *" 
+    - cron: "54 3 * * *" # 9:24 AM IST
   workflow_dispatch:
-      inputs:
-        branch:
-          description: 'Branch to run on'
-          required: true
-          default: 'cron-job'
+    inputs:
+      branch:
+        description: 'Branch to run on'
+        required: true
+        default: 'cron-job'
 
 jobs:
   terraform:
