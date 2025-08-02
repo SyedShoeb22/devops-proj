@@ -3,6 +3,7 @@ name: 'Terraform + Ansible on GCP'
 on:
   repository_dispatch:
     types: [trigger-vm-creation]
+  workflow_dispatch:
   
 jobs:
   terraform:
