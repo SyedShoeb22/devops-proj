@@ -63,6 +63,13 @@ jobs:
             -var="zone=us-central1-a" \
             -var="ssh_public_key=~/.ssh/id_rsa.pub"
 
+      - name: Grant Scheduler permission to invoke delete-vm
+        run: |
+          gcloud functions add-iam-policy-binding delete-vm \
+            --region=us-central1 \
+            --member="serviceAccount:scheduler-sa@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com" \
+            --role="roles/cloudfunctions.invoker"
+
       - name: Extract Instance IP
         id: get_ip
         run: |
