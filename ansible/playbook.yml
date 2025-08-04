@@ -3,7 +3,7 @@
   collections:
     - community.docker
   vars:
-  notebook_dir: /opt/pyspark-notebooks
+    notebook_dir: /opt/pyspark-notebooks
 
   vars_files:
     - users.yml
