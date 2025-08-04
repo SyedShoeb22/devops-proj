@@ -72,4 +72,3 @@ resource "google_cloudfunctions_function_iam_member" "stop_vm_invoker" {
   role           = "roles/cloudfunctions.invoker"
   member         = "serviceAccount:scheduler-sa@${local.credentials.project_id}.iam.gserviceaccount.com"
 }
-
