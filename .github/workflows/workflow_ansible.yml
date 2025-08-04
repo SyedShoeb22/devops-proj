@@ -46,6 +46,8 @@ jobs:
         sudo apt update
         sudo apt install -y python3-pip
         pip3 install ansible passlib
+        pip3 install ansible docker
+        ansible-galaxy collection install community.docker
         ansible-playbook -i inventory.ini playbook.yml --extra-vars "ssh_public_key='${SSH_PUBLIC_KEY}'"
       env:
         SMTP_ZOHO_PASS: ${{ secrets.SMTP_ZOHO_PASS }}
