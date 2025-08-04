@@ -187,15 +187,17 @@
     #   loop: "{{ users }}"
     
     - name: Install Scala inside container
-      docker_container_exec:
+      community.docker.docker_container_exec:
         container: pyspark-notebook-container
-        command: |
-          apt-get update && apt-get install -y wget && \
-          wget https://downloads.lightbend.com/scala/2.12.15/scala-2.12.15.tgz && \
-          tar xvf scala-2.12.15.tgz && \
-          mv scala-2.12.15 /usr/local/scala && \
-          ln -s /usr/local/scala/bin/* /usr/local/bin/ && \
-          rm scala-2.12.15.tgz
+        command: >
+          bash -c "apt-get update &&
+          apt-get install -y wget &&
+          wget https://downloads.lightbend.com/scala/2.12.15/scala-2.12.15.tgz &&
+          tar xvf scala-2.12.15.tgz &&
+          mv scala-2.12.15 /usr/local/scala &&
+          ln -s /usr/local/scala/bin/* /usr/local/bin/ &&
+          rm scala-2.12.15.tgz"
+
 
     - name: Create MLlib jobs directory
       file:
