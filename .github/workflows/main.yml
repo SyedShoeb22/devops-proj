@@ -70,6 +70,20 @@ jobs:
             --member="serviceAccount:scheduler-sa@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com" \
             --role="roles/cloudfunctions.invoker"
 
+      - name: Grant Scheduler permission to invoke start-vm
+        run: |
+          gcloud functions add-iam-policy-binding start-vm \
+            --region=us-central1 \
+            --member="serviceAccount:scheduler-sa@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com" \
+            --role="roles/cloudfunctions.invoker"
+
+      - name: Grant Scheduler permission to invoke stop-vm
+        run: |
+          gcloud functions add-iam-policy-binding stop-vm \
+            --region=us-central1 \
+            --member="serviceAccount:scheduler-sa@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com" \
+            --role="roles/cloudfunctions.invoker"
+
       - name: Extract Instance IP
         id: get_ip
         run: |
