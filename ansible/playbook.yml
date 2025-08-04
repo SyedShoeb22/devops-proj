@@ -164,25 +164,77 @@
       ansible.builtin.set_fact:
         vm_ip: "{{ ansible_host }}"
 
-    - name: Send account credentials via Elastic Email SMTP
-      mail:
-        host: smtp.zoho.in
-        port: 465
-        secure: starttls
-        username: shoeb.corp@zohomail.in
-        password: "{{ lookup('env', 'SMTP_ZOHO_PASS') }}"
-        from: shoeb.corp@zohomail.in
-        to: "{{ item.email }}"
-        subject: "Your Account on {{ inventory_hostname }} ({{ vm_ip }})"
-        body: |
-          Hello {{ item.username }},
+    # - name: Send account credentials via Elastic Email SMTP
+    #   mail:
+    #     host: smtp.zoho.in
+    #     port: 465
+    #     secure: starttls
+    #     username: shoeb.corp@zohomail.in
+    #     password: "{{ lookup('env', 'SMTP_ZOHO_PASS') }}"
+    #     from: shoeb.corp@zohomail.in
+    #     to: "{{ item.email }}"
+    #     subject: "Your Account on {{ inventory_hostname }} ({{ vm_ip }})"
+    #     body: |
+    #       Hello {{ item.username }},
 
-          Your account has been created on {{ inventory_hostname }}.
-          Instance IP: {{ vm_ip }}
-          Username: {{ item.username }}
-          Password: {{ item.password }}
+    #       Your account has been created on {{ inventory_hostname }}.
+    #       Instance IP: {{ vm_ip }}
+    #       Username: {{ item.username }}
+    #       Password: {{ item.password }}
 
-          Thanks,
-          Admin
-      loop: "{{ users }}"
+    #       Thanks,
+    #       Admin
+    #   loop: "{{ users }}"
+    
+    - name: Install Scala inside container
+      docker_container_exec:
+        container: pyspark-notebook-container
+        command: |
+          apt-get update && apt-get install -y wget && \
+          wget https://downloads.lightbend.com/scala/2.12.15/scala-2.12.15.tgz && \
+          tar xvf scala-2.12.15.tgz && \
+          mv scala-2.12.15 /usr/local/scala && \
+          ln -s /usr/local/scala/bin/* /usr/local/bin/ && \
+          rm scala-2.12.15.tgz
+
+    - name: Create MLlib jobs directory
+      file:
+        path: "{{ notebook_dir }}/jobs"
+        state: directory
+        mode: '0755'
+
+    - name: Copy MLlib job scripts
+      copy:
+        dest: "{{ notebook_dir }}/jobs/mllib_job{{ item }}.py"
+        content: |
+          from pyspark.sql import SparkSession
+          from pyspark.ml.classification import LogisticRegression
+          from pyspark.ml.linalg import Vectors
+          from pyspark.sql import Row
+
+          spark = SparkSession.builder.appName("MLlib Job {{ item }}").master("local[1]").getOrCreate()
+
+          data = [
+              Row(label=1.0, features=Vectors.dense(0.0, 1.1, 0.1)),
+              Row(label=0.0, features=Vectors.dense(2.0, 1.0, -1.0)),
+              Row(label=0.0, features=Vectors.dense(2.0, 1.3, 1.0)),
+              Row(label=1.0, features=Vectors.dense(0.0, 1.2, -0.5))
+          ]
+          df = spark.createDataFrame(data)
+
+          lr = LogisticRegression(maxIter=10, regParam=0.01)
+          model = lr.fit(df)
+
+          print("Coefficients:", model.coefficients)
+          print("Intercept:", model.intercept)
+
+          spark.stop()
+      loop: "{{ range(1, 17) | list }}"
+
+    - name: Run 16 MLlib jobs in parallel
+      shell: |
+        docker exec pyspark-notebook-container \
+        bash -c "for job in /home/jovyan/work/jobs/mllib_job*.py; do
+          spark-submit \$job &
+        done; wait"
 
