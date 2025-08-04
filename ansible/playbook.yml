@@ -155,7 +155,7 @@
         state: started
         restart_policy: always
         ports:
-          - "9870:8888"
+          - "8888:8888"
         volumes:
           - "{{ notebook_dir }}:/home/jovyan/work"
         command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''"
