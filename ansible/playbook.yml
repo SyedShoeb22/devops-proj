@@ -2,10 +2,11 @@
   become: yes
   collections:
     - community.docker
+  vars:
+    notebook_dir: /opt/pyspark-notebooks
 
   vars_files:
     - users.yml
-
 
   tasks:
     - name: Debug users loaded from CSV
@@ -89,16 +90,16 @@
         name: ssh
         state: restarted
 
+    - name: Create notebook directory
+      file:
+        path: "{{ notebook_dir }}"
+        state: directory
+        mode: '0755'
+        
     - name: Pull PySpark notebook Docker image
       docker_image:
         name: jupyter/pyspark-notebook:latest
         source: pull
-
-    - name: Ensure notebook directory exists on host
-      file:
-        path: "{{ notebook_dir }}"
-        state: directory
-        mode: '0777'
 
     - name: Create a PySpark Sample Jupyter Notebook file
       copy:
@@ -154,11 +155,11 @@
         state: started
         restart_policy: always
         ports:
-          - "9870:8888"
+          - "8888:8888"
         volumes:
           - "{{ notebook_dir }}:/home/jovyan/work"
         command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''"
-
+        
     - name: Get public IP of remote VM
       ansible.builtin.set_fact:
         vm_ip: "{{ ansible_host }}"
