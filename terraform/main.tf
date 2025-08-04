@@ -199,3 +199,27 @@ resource "google_cloud_scheduler_job" "delete_5pm" {
     http_method = "POST"
   }
 }
+
+resource "google_cloudfunctions_function_iam_member" "delete_vm_invoker" {
+  project        = local.credentials.project_id
+  region         = var.region
+  cloud_function = google_cloudfunctions_function.delete_vm.name
+  role           = "roles/cloudfunctions.invoker"
+  member         = "serviceAccount:scheduler-sa@${local.credentials.project_id}.iam.gserviceaccount.com"
+}
+
+resource "google_cloudfunctions_function_iam_member" "start_vm_invoker" {
+  project        = local.credentials.project_id
+  region         = var.region
+  cloud_function = google_cloudfunctions_function.start_vm.name
+  role           = "roles/cloudfunctions.invoker"
+  member         = "serviceAccount:scheduler-sa@${local.credentials.project_id}.iam.gserviceaccount.com"
+}
+
+resource "google_cloudfunctions_function_iam_member" "stop_vm_invoker" {
+  project        = local.credentials.project_id
+  region         = var.region
+  cloud_function = google_cloudfunctions_function.stop_vm.name
+  role           = "roles/cloudfunctions.invoker"
+  member         = "serviceAccount:scheduler-sa@${local.credentials.project_id}.iam.gserviceaccount.com"
+}
