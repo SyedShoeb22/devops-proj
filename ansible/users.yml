@@ -1,7 +1,64 @@
 users:
-  - username: shoeb
-    password: "Shoeb@123"
-    email: syedshoeb8380@gmail.com
-  - username: abrar
-    password: "Abrar@123"
-    email: syedabrar7757@gmail.com
+  - username: arun
+    password: arun@123
+    email: arununni2008@gmail.com
+
+  - username: akash
+    password: akash@123
+    email: akashst010@gmail.com
+
+  - username: abdul
+    password: abdul@123
+    email: musaveerbijapur@gmail.com
+
+  - username: indresh
+    password: indresh@123
+    email: indreshgowdru05@gmail.com
+
+  - username: farhaan
+    password: farhaan@123
+    email: farhaanhussain123@gmail.com
+
+  - username: manoj
+    password: manoj@123
+    email: manojkumarvakiti26@gmail.com
+
+  - username: yashwanth
+    password: yashwanth@123
+    email: yashwanth.hr5511@gmail.com
+
+  - username: immanuel
+    password: immanuel@123
+    email: immanuelrajkayala@gmail.com
+
+  - username: abhishek
+    password: abhishek@123
+    email: abhishekkm8088@gmail.com
+
+  - username: nalle
+    password: nalle@123
+    email: dileepnalle123@gmail.com
+
+  - username: aluru
+    password: aluru@123
+    email: mabusharief49@gmail.com
+
+  - username: nagakiran
+    password: nagakiran@123
+    email: kirannelikanti1818@gmail.com
+
+  - username: nagaraju
+    password: nagaraju@123
+    email: nagarajugarinagesh8@gmail.com
+
+  - username: alby
+    password: alby@123
+    email: albyolakkattu@gmail.com
+
+  - username: anas
+    password: anas@123
+    email: anastm456@gmail.com
+
+  - username: mujahed
+    password: mujahed@123
+    email: mujahed85@gmail.com
