@@ -90,12 +90,12 @@
         name: ssh
         state: restarted
 
-     - name: Create notebook directory
+    - name: Create notebook directory
       file:
         path: "{{ notebook_dir }}"
         state: directory
         mode: '0755'
-
+        
     - name: Pull PySpark notebook Docker image
       docker_image:
         name: jupyter/pyspark-notebook:latest
