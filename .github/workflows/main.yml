@@ -83,6 +83,8 @@ jobs:
           sudo apt update
           sudo apt install -y python3-pip
           pip3 install ansible passlib
+          pip3 install ansible docker
+          ansible-galaxy collection install community.docker
   
       - name: Run Ansible Playbook
         run: |
