@@ -75,11 +75,12 @@
               ln -s /usr/local/scala/bin/* /usr/local/bin/ && \
               rm scala-${SCALA_VERSION}.tgz
           # Install Spark
-          RUN wget https://downloads.apache.org/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz && \
+          RUN wget https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz && \
               tar xvf spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz && \
               mv spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION} /usr/local/spark && \
               ln -s /usr/local/spark/bin/* /usr/local/bin/ && \
               rm spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz
+    
           # Install PySpark & MLlib dependencies
           RUN pip3 install pyspark jupyterlab numpy pandas matplotlib
           # Create specific users
