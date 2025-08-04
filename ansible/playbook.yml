@@ -105,6 +105,19 @@
 
           CMD ["bash", "-c", "start-notebook.sh --NotebookApp.token='' --NotebookApp.ip=0.0.0.0 --NotebookApp.allow_root=True"]
 
+    - name: Copy Dockerfile to remote server
+      ansible.builtin.copy:
+        src: ./Dockerfile
+        dest: /tmp/Dockerfile
+    
+    - name: Build Docker image from Dockerfile
+      community.docker.docker_image:
+        name: spark-all-in-one
+        tag: latest
+        build:
+          path: /tmp
+        source: build
+
     - name: Build Docker image from local Dockerfile
       community.docker.docker_image:
         name: spark-all-in-one
