@@ -3,8 +3,8 @@
   hosts: all
   become: yes
   vars:
-    dockerhub_username: "YOUR_DOCKERHUB_USERNAME"
-    dockerhub_password: "YOUR_DOCKERHUB_PASSWORD"
+    dockerhub_username: "shoebcorporate"
+    dockerhub_password: "8668686059Ss@"
     image_name: "spark-all-in-one"
     image_tag: "latest"
     spark_version: "3.5.1"
