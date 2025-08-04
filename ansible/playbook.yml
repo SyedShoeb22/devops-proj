@@ -6,7 +6,6 @@
   vars_files:
     - users.yml
 
-
   tasks:
     - name: Debug users loaded from CSV
       debug:
@@ -93,12 +92,6 @@
       docker_image:
         name: jupyter/pyspark-notebook:latest
         source: pull
-
-    - name: Ensure notebook directory exists on host
-      file:
-        path: "{{ notebook_dir }}"
-        state: directory
-        mode: '0777'
 
     - name: Create a PySpark Sample Jupyter Notebook file
       copy:
