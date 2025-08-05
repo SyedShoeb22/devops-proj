@@ -63,8 +63,7 @@
       service:
         name: ssh
         state: restarted
-      when: sshd_config_test.rc == 0
-
+        
     - name: Create notebook directory
       file:
         path: "{{ notebook_dir }}"
