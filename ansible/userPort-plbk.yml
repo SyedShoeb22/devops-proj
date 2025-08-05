@@ -28,15 +28,21 @@
         append: yes
       loop: "{{ users }}"
 
-    - name: Create SSH config for each user
+    - name: Build SSHD config for multiple users/ports
       copy:
-        dest: "/etc/ssh/sshd_config.d/{{ item.username }}.conf"
+        dest: /etc/ssh/sshd_config.d/multiport.conf
         content: |
-          Port {{ item.port }}
-          AllowUsers {{ item.username }}
+          # Allow multiple ports for SSH
+          Port {{ users | map(attribute='port') | join("\nPort ") }}
           PasswordAuthentication yes
           PermitRootLogin no
-      loop: "{{ users }}"
+
+          {% for u in users %}
+          Match User {{ u.username }}
+              ForceCommand /bin/bash
+              AllowTcpForwarding yes
+              X11Forwarding yes
+          {% endfor %}
 
     - name: Allow SSH ports in firewall
       community.general.ufw:
