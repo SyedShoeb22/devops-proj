@@ -53,12 +53,6 @@
         append: yes
       loop: "{{ users }}"
 
-    - name: Allow default SSH port 22 in UFW
-      community.general.ufw:
-        rule: allow
-        port: "22"
-        proto: tcp
-
     - name: Restart SSH safely
       service:
         name: ssh
