@@ -88,7 +88,36 @@
         regexp: '^ChallengeResponseAuthentication'
         line: 'ChallengeResponseAuthentication no'
         state: present
-    
+
+    - name: Ensure required packages are installed
+      apt:
+        name:
+          - openssh-server
+          - ufw
+        state: present
+        update_cache: yes
+
+    - name: Create individual SSH configs for each user
+      copy:
+        dest: "/etc/ssh/sshd_config.d/{{ item.username }}.conf"
+        content: |
+          Port {{ item.port }}
+          PermitRootLogin no
+          AllowUsers {{ item.username }}
+          PasswordAuthentication yes
+      loop: "{{ users }}"
+
+    - name: Allow SSH ports in UFW firewall
+      community.general.ufw:
+        rule: allow
+        port: "{{ item.port }}"
+        proto: tcp
+      loop: "{{ users }}"
+
+    - name: Ensure UFW is enabled
+      community.general.ufw:
+        state: enabled
+
     - name: Restart SSH daemon
       service:
         name: ssh
