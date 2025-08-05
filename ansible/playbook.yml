@@ -199,46 +199,81 @@
           ln -s /usr/local/scala/bin/* /usr/local/bin/ &&
           rm scala-2.12.15.tgz"
 
+    - name: Install Java in container
+      community.docker.docker_container_exec:
+        container: pyspark-notebook-container
+        user: root
+        command: bash -c "apt-get update && apt-get install -y openjdk-17-jdk"
 
-
+    
     - name: Create MLlib jobs directory
       file:
         path: "{{ notebook_dir }}/jobs"
         state: directory
         mode: '0755'
 
-    - name: Copy MLlib job scripts
+    - name: Create Java MLlib job source
       copy:
-        dest: "{{ notebook_dir }}/jobs/mllib_job{{ item }}.py"
+        dest: "{{ notebook_dir }}/java_mllib/LogisticRegressionExample.java"
         content: |
-          from pyspark.sql import SparkSession
-          from pyspark.ml.classification import LogisticRegression
-          from pyspark.ml.linalg import Vectors
-          from pyspark.sql import Row
+          import org.apache.spark.sql.SparkSession;
+          import org.apache.spark.ml.classification.LogisticRegression;
+          import org.apache.spark.ml.linalg.Vectors;
+          import org.apache.spark.sql.Row;
+          import org.apache.spark.sql.Dataset;
+          import org.apache.spark.sql.RowFactory;
+          import org.apache.spark.sql.types.DataTypes;
+          import org.apache.spark.sql.types.StructField;
+          import org.apache.spark.sql.types.StructType;
+          import java.util.Arrays;
+          import java.util.List;
+    
+          public class LogisticRegressionExample {
+              public static void main(String[] args) {
+                  SparkSession spark = SparkSession.builder()
+                          .appName("Java MLlib Logistic Regression")
+                          .master("local[*]")
+                          .getOrCreate();
+    
+                  List<Row> data = Arrays.asList(
+                      RowFactory.create(1.0, Vectors.dense(0.0, 1.1, 0.1)),
+                      RowFactory.create(0.0, Vectors.dense(2.0, 1.0, -1.0)),
+                      RowFactory.create(0.0, Vectors.dense(2.0, 1.3, 1.0)),
+                      RowFactory.create(1.0, Vectors.dense(0.0, 1.2, -0.5))
+                  );
+    
+                  StructType schema = DataTypes.createStructType(new StructField[]{
+                      DataTypes.createStructField("label", DataTypes.DoubleType, false),
+                      DataTypes.createStructField("features", new org.apache.spark.ml.linalg.VectorUDT(), false)
+                  });
+    
+                  Dataset<Row> df = spark.createDataFrame(data, schema);
+    
+                  LogisticRegression lr = new LogisticRegression()
+                          .setMaxIter(10)
+                          .setRegParam(0.01);
+    
+                  lr.fit(df).summary().predictions().show();
+    
+                  spark.stop();
+              }
+          }
 
-          spark = SparkSession.builder.appName("MLlib Job {{ item }}").master("local[1]").getOrCreate()
+    - name: Compile Java MLlib job
+      community.docker.docker_container_exec:
+        container: pyspark-notebook-container
+        user: root
+        command: bash -c "javac -cp '/usr/local/spark/jars/*' /home/jovyan/work/java_mllib/LogisticRegressionExample.java"
+    
+    - name: Run Java MLlib job
+      community.docker.docker_container_exec:
+        container: pyspark-notebook-container
+        command: bash -c "spark-submit --class LogisticRegressionExample --master local[*] /home/jovyan/work/java_mllib/LogisticRegressionExample.class"
 
-          data = [
-              Row(label=1.0, features=Vectors.dense(0.0, 1.1, 0.1)),
-              Row(label=0.0, features=Vectors.dense(2.0, 1.0, -1.0)),
-              Row(label=0.0, features=Vectors.dense(2.0, 1.3, 1.0)),
-              Row(label=1.0, features=Vectors.dense(0.0, 1.2, -0.5))
-          ]
-          df = spark.createDataFrame(data)
+    - name: Run 16 Java MLlib jobs in parallel
+      community.docker.docker_container_exec:
+        container: pyspark-notebook-container
+        command: bash -c "for job in /home/jovyan/work/java_mllib/*.class; do spark-submit --class $(basename $job .class) --master local[*] $job & done; wait"
 
-          lr = LogisticRegression(maxIter=10, regParam=0.01)
-          model = lr.fit(df)
 
-          print("Coefficients:", model.coefficients)
-          print("Intercept:", model.intercept)
-
-          spark.stop()
-      loop: "{{ range(1, 17) | list }}"
-
-    - name: Run 16 MLlib jobs in parallel
-      shell: |
-        docker exec pyspark-notebook-container \
-        bash -c "for job in /home/jovyan/work/jobs/mllib_job*.py; do
-          spark-submit \$job &
-        done; wait"
 
