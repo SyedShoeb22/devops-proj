@@ -76,20 +76,28 @@
         user: root
         command: mkdir -p /home/jovyan/work/java_mllib
 
+    - name: Download Scala tarball on host
+      get_url:
+        url: https://downloads.lightbend.com/scala/2.12.15/scala-2.12.15.tgz
+        dest: /tmp/scala-2.12.15.tgz
+        mode: '0644'
+        force: yes
+    
+    - name: Copy Scala tarball into container
+      community.docker.docker_cp:
+        src: /tmp/scala-2.12.15.tgz
+        dest: /tmp/scala-2.12.15.tgz
+        container: pyspark-notebook-container
+    
     - name: Install Scala inside container
       community.docker.docker_container_exec:
         container: pyspark-notebook-container
         user: root
-        command: >
-          bash -c "apt-get update &&
-          DEBIAN_FRONTEND=noninteractive apt-get install -y wget &&
-          rm -f scala-2.12.15.tgz &&
-          wget --tries=5 -O scala-2.12.15.tgz https://downloads.lightbend.com/scala/2.12.15/scala-2.12.15.tgz &&
-          tar xvf scala-2.12.15.tgz &&
-          mv scala-2.12.15 /usr/local/scala &&
-          ln -s /usr/local/scala/bin/* /usr/local/bin/ &&
-          rm scala-2.12.15.tgz"
-
+        command: bash -c "
+          tar -xzf /tmp/scala-2.12.15.tgz -C /usr/local &&
+          mv /usr/local/scala-2.12.15 /usr/local/scala &&
+          ln -sf /usr/local/scala/bin/* /usr/local/bin/"
+  
     - name: Install Java in container
       community.docker.docker_container_exec:
         container: pyspark-notebook-container
