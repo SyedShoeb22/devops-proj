@@ -18,7 +18,7 @@ provider "google" {
 }
 
 resource "google_compute_instance" "default" {
-  name         = "devops-instance"
+  name         = "ibm"
   machine_type = "n2-standard-8"
   zone         = var.zone
 
