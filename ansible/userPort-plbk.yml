@@ -4,7 +4,7 @@
     - users.yml
 
   tasks:
-    - name: Create users
+    - name: Create users with hashed passwords
       user:
         name: "{{ item.username }}"
         password: "{{ item.password | password_hash('sha512') }}"
@@ -12,54 +12,40 @@
         create_home: yes
       loop: "{{ users }}"
 
-    - name: Install UFW and OpenSSH Server
+    - name: Ensure UFW firewall is installed
       apt:
-        name:
-          - ufw
-          - openssh-server
+        name: ufw
         state: present
         update_cache: yes
 
-    - name: Ensure UFW is enabled
-      community.general.ufw:
-        state: enabled
-
-    - name: Allow default SSH port (22)
+    - name: Allow default SSH port 22 in UFW
       community.general.ufw:
         rule: allow
         port: "22"
         proto: tcp
 
-    - name: Allow SSH ports for each user
+    - name: Add new SSH ports to sshd_config
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        insertafter: '^#Port 22'
+        line: "Port {{ item.port }}"
+        state: present
+      loop: "{{ users }}"
+      notify: Restart SSH
+
+    - name: Allow all new ports in UFW
       community.general.ufw:
         rule: allow
         port: "{{ item.port }}"
         proto: tcp
       loop: "{{ users }}"
 
-    - name: Ensure sshd_config has Port 22
-      lineinfile:
-        path: /etc/ssh/sshd_config
-        regexp: '^Port 22'
-        line: 'Port 22'
-        state: present
+    - name: Enable UFW firewall
+      community.general.ufw:
+        state: enabled
 
-    - name: Add user-specific SSH ports to sshd_config
-      lineinfile:
-        path: /etc/ssh/sshd_config
-        insertafter: '^Port 22'
-        line: "Port {{ item.port }}"
-        state: present
-      loop: "{{ users }}"
-
-    - name: Disable root login
-      lineinfile:
-        path: /etc/ssh/sshd_config
-        regexp: '^PermitRootLogin'
-        line: 'PermitRootLogin no'
-        state: present
-
-    - name: Restart SSH service
+  handlers:
+    - name: Restart SSH
       service:
         name: ssh
         state: restarted
