@@ -4,58 +4,62 @@
     - users.yml
 
   tasks:
-    - name: Install required packages
-      apt:
-        name:
-          - openssh-server
-          - ufw
-        state: present
-        update_cache: yes
-
     - name: Create users
       user:
         name: "{{ item.username }}"
         password: "{{ item.password | password_hash('sha512') }}"
         shell: /bin/bash
-        state: present
         create_home: yes
       loop: "{{ users }}"
 
-    - name: Add users to sudo group
-      user:
-        name: "{{ item.username }}"
-        groups: sudo
-        append: yes
-      loop: "{{ users }}"
+    - name: Install UFW and OpenSSH Server
+      apt:
+        name:
+          - ufw
+          - openssh-server
+        state: present
+        update_cache: yes
 
-    - name: Build SSHD config for multiple users/ports
-      copy:
-        dest: /etc/ssh/sshd_config.d/multiport.conf
-        content: |
-          # Allow multiple ports for SSH
-          Port {{ users | map(attribute='port') | join("\nPort ") }}
-          PasswordAuthentication yes
-          PermitRootLogin no
+    - name: Ensure UFW is enabled
+      community.general.ufw:
+        state: enabled
 
-          {% for u in users %}
-          Match User {{ u.username }}
-              ForceCommand /bin/bash
-              AllowTcpForwarding yes
-              X11Forwarding yes
-          {% endfor %}
+    - name: Allow default SSH port (22)
+      community.general.ufw:
+        rule: allow
+        port: "22"
+        proto: tcp
 
-    - name: Allow SSH ports in firewall
+    - name: Allow SSH ports for each user
       community.general.ufw:
         rule: allow
         port: "{{ item.port }}"
         proto: tcp
       loop: "{{ users }}"
 
-    - name: Enable UFW firewall
-      community.general.ufw:
-        state: enabled
+    - name: Ensure sshd_config has Port 22
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^Port 22'
+        line: 'Port 22'
+        state: present
 
-    - name: Restart SSH
+    - name: Add user-specific SSH ports to sshd_config
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        insertafter: '^Port 22'
+        line: "Port {{ item.port }}"
+        state: present
+      loop: "{{ users }}"
+
+    - name: Disable root login
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PermitRootLogin'
+        line: 'PermitRootLogin no'
+        state: present
+
+    - name: Restart SSH service
       service:
         name: ssh
         state: restarted
