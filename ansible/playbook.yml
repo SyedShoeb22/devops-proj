@@ -70,26 +70,7 @@
         regexp: '^PasswordAuthentication'
         line: 'PasswordAuthentication yes'
         state: present
-
-    - name: Ensure KbdInteractiveAuthentication yes
-      lineinfile:
-        path: /etc/ssh/sshd_config
-        regexp: 'KbdInteractiveAuthentication no'
-        line: 'KbdInteractiveAuthentication yes'
-        state: present
         
-    - name: Ensure ChallengeResponseAuthentication is no
-      lineinfile:
-        path: /etc/ssh/sshd_config
-        regexp: '^ChallengeResponseAuthentication'
-        line: 'ChallengeResponseAuthentication no'
-        state: present
-    
-    - name: Restart SSH daemon
-      service:
-        name: ssh
-        state: restarted
-
     - name: Create notebook directory
       file:
         path: "{{ notebook_dir }}"
@@ -159,33 +140,7 @@
         volumes:
           - "{{ notebook_dir }}:/home/jovyan/work"
         command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''"
-        
-    - name: Get public IP of remote VM
-      ansible.builtin.set_fact:
-        vm_ip: "{{ ansible_host }}"
 
-    # - name: Send account credentials via Elastic Email SMTP
-    #   mail:
-    #     host: smtp.zoho.in
-    #     port: 465
-    #     secure: starttls
-    #     username: shoeb.corp@zohomail.in
-    #     password: "{{ lookup('env', 'SMTP_ZOHO_PASS') }}"
-    #     from: shoeb.corp@zohomail.in
-    #     to: "{{ item.email }}"
-    #     subject: "Your Account on {{ inventory_hostname }} ({{ vm_ip }})"
-    #     body: |
-    #       Hello {{ item.username }},
-
-    #       Your account has been created on {{ inventory_hostname }}.
-    #       Instance IP: {{ vm_ip }}
-    #       Username: {{ item.username }}
-    #       Password: {{ item.password }}
-
-    #       Thanks,
-    #       Admin
-    #   loop: "{{ users }}"
-    
     - name: Install Scala inside container
       community.docker.docker_container_exec:
         container: pyspark-notebook-container
@@ -204,7 +159,6 @@
         container: pyspark-notebook-container
         user: root
         command: bash -c "apt-get update && apt-get install -y openjdk-17-jdk"
-
     
     - name: Create MLlib jobs directory
       file:
@@ -274,6 +228,52 @@
       community.docker.docker_container_exec:
         container: pyspark-notebook-container
         command: bash -c "for job in /home/jovyan/work/java_mllib/*.class; do spark-submit --class $(basename $job .class) --master local[*] $job & done; wait"
+  
+    - name: Get public IP of remote VM
+      ansible.builtin.set_fact:
+        vm_ip: "{{ ansible_host }}"
 
+    - name: Ensure KbdInteractiveAuthentication yes
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: 'KbdInteractiveAuthentication no'
+        line: 'KbdInteractiveAuthentication yes'
+        state: present
+        
+    - name: Ensure ChallengeResponseAuthentication is no
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^ChallengeResponseAuthentication'
+        line: 'ChallengeResponseAuthentication no'
+        state: present
+    
+    - name: Restart SSH daemon
+      service:
+        name: ssh
+        state: restarted
+
+
+    # - name: Send account credentials via Elastic Email SMTP
+    #   mail:
+    #     host: smtp.zoho.in
+    #     port: 465
+    #     secure: starttls
+    #     username: shoeb.corp@zohomail.in
+    #     password: "{{ lookup('env', 'SMTP_ZOHO_PASS') }}"
+    #     from: shoeb.corp@zohomail.in
+    #     to: "{{ item.email }}"
+    #     subject: "Your Account on {{ inventory_hostname }} ({{ vm_ip }})"
+    #     body: |
+    #       Hello {{ item.username }},
+
+    #       Your account has been created on {{ inventory_hostname }}.
+    #       Instance IP: {{ vm_ip }}
+    #       Username: {{ item.username }}
+    #       Password: {{ item.password }}
+
+    #       Thanks,
+    #       Admin
+    #   loop: "{{ users }}"
+    
 
 
