@@ -76,12 +76,12 @@
         user: root
         command: mkdir -p /home/jovyan/work/java_mllib
 
-      - name: Download Scala tarball on host
-        get_url:
-          url: https://downloads.lightbend.com/scala/2.12.15/scala-2.12.15.tgz
-          dest: /opt/scala-2.12.15.tgz
-          mode: '0644'
-          force: yes
+    - name: Download Scala tarball on host
+      get_url:
+        url: https://downloads.lightbend.com/scala/2.12.15/scala-2.12.15.tgz
+        dest: /opt/scala-2.12.15.tgz
+        mode: '0644'
+        force: yes
     
     - name: Stop current PySpark container
       community.docker.docker_container:
@@ -100,6 +100,15 @@
           - "{{ notebook_dir }}:/home/jovyan/work"
           - "/opt/scala-2.12.15.tgz:/tmp/scala-2.12.15.tgz"
         command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''"
+
+    - name: Install Scala inside container
+      community.docker.docker_container_exec:
+        container: pyspark-notebook-container
+        user: root
+        command: bash -c "
+          tar -xzf /tmp/scala-2.12.15.tgz -C /usr/local &&
+          mv /usr/local/scala-2.12.15 /usr/local/scala &&
+          ln -sf /usr/local/scala/bin/* /usr/local/bin/"
 
   
     - name: Install Java in container
