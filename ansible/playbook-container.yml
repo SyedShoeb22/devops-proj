@@ -1,3 +1,11 @@
+- hosts: servers
+  become: yes
+  collections:
+    - community.docker
+  vars:
+    notebook_dir: /opt/pyspark-notebooks
+
+
 - name: Install Scala inside container
   community.docker.docker_container_exec:
     container: pyspark-notebook-container
