@@ -168,43 +168,19 @@
         container: pyspark-notebook-container
         user: root
         command: mkdir -p /home/jovyan/work/java_mllib
-        
-    - name: Install wget inside container
-      community.docker.docker_container_exec:
-        container: pyspark-notebook-container
-        user: root
-        command: apt-get update && apt-get install wget
-    
-    - name: Download Scala inside container
-      community.docker.docker_container_exec:
-        container: pyspark-notebook-container
-        user: root
-        command: wget -q --show-progress --tries=5 https://downloads.lightbend.com/scala/2.12.15/scala-2.12.15.tgz -O /tmp/scala-2.12.15.tgz
-    
-    - name: Extract Scala inside container
-      community.docker.docker_container_exec:
-        container: pyspark-notebook-container
-        user: root
-        command: tar -xvf /tmp/scala-2.12.15.tgz -C /usr/local && mv /usr/local/scala-2.12.15 /usr/local/scala
-    
-    - name: Link Scala binaries
-      community.docker.docker_container_exec:
-        container: pyspark-notebook-container
-        user: root
-        command: ln -s /usr/local/scala/bin/* /usr/local/bin/
 
-    # - name: Install Scala inside container
-    #   community.docker.docker_container_exec:
-    #     container: pyspark-notebook-container
-    #     user: root
-    #     command: >
-    #       bash -c "apt-get update &&
-    #       apt-get install -y wget &&
-    #       wget https://downloads.lightbend.com/scala/2.12.15/scala-2.12.15.tgz &&
-    #       tar xvf scala-2.12.15.tgz &&
-    #       mv scala-2.12.15 /usr/local/scala &&
-    #       ln -s /usr/local/scala/bin/* /usr/local/bin/ &&
-    #       rm scala-2.12.15.tgz"
+    - name: Install Scala inside container
+      community.docker.docker_container_exec:
+        container: pyspark-notebook-container
+        user: root
+        command: >
+          bash -c "apt-get update &&
+          apt-get install -y wget &&
+          wget https://downloads.lightbend.com/scala/2.12.15/scala-2.12.15.tgz &&
+          tar xvf scala-2.12.15.tgz &&
+          mv scala-2.12.15 /usr/local/scala &&
+          ln -s /usr/local/scala/bin/* /usr/local/bin/ &&
+          rm scala-2.12.15.tgz"
 
     - name: Install Java in container
       community.docker.docker_container_exec:
