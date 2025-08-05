@@ -173,7 +173,7 @@
       community.docker.docker_container_exec:
         container: pyspark-notebook-container
         user: root
-        command: apt-get update && apt-get install -y wget
+        command: apt-get update && apt-get install wget -y
     
     - name: Download Scala inside container
       community.docker.docker_container_exec:
