@@ -2,6 +2,8 @@
   become: yes
   vars_files:
     - users.yml
+  vars:
+    notebook_dir: /opt/pyspark-notebooks
 
   tasks:
     - name: Install required packages
@@ -51,12 +53,36 @@
         append: yes
       loop: "{{ users }}"
 
+    - name: Allow default SSH port 22 in UFW
+      community.general.ufw:
+        rule: allow
+        port: "22"
+        proto: tcp
+
+    - name: Add custom SSH ports to sshd_config
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        insertafter: '^#Port 22'
+        line: "Port {{ item.port }}"
+        state: present
+      loop: "{{ users }}"
+
+    - name: Allow custom SSH ports in UFW
+      community.general.ufw:
+        rule: allow
+        port: "{{ item.port }}"
+        proto: tcp
+      loop: "{{ users }}"
+
+    - name: Enable UFW firewall
+      community.general.ufw:
+        state: enabled
+
     - name: Restart SSH safely
       service:
         name: ssh
         state: restarted
 
-        
     - name: Create notebook directory
       file:
         path: "{{ notebook_dir }}"
@@ -82,20 +108,10 @@
                "outputs": [],
                "source": [
                 "from pyspark.sql import SparkSession\n",
-                "\n",
-                "# Create Spark session\n",
-                "spark = SparkSession.builder \\\n",
-                "    .appName(\"Hello PySpark\") \\\n",
-                "    .getOrCreate()\n",
-                "\n",
-                "# Create a DataFrame\n",
-                "data = [(\"Shoeb\", 25), (\"Abrar\", 30), (\"Sara\", 22)]\n",
-                "df = spark.createDataFrame(data, [\"Name\", \"Age\"])\n",
-                "\n",
-                "# Show DataFrame\n",
+                "spark = SparkSession.builder.appName('Hello PySpark').getOrCreate()\n",
+                "data = [('Shoeb', 25), ('Abrar', 30), ('Sara', 22)]\n",
+                "df = spark.createDataFrame(data, ['Name', 'Age'])\n",
                 "df.show()\n",
-                "\n",
-                "# Stop Spark session\n",
                 "spark.stop()"
                ]
               }
@@ -107,8 +123,7 @@
                "name": "python3"
               },
               "language_info": {
-               "name": "python",
-               "version": ""
+               "name": "python"
               }
              },
              "nbformat": 4,
@@ -241,31 +256,3 @@
       community.docker.docker_container_exec:
         container: pyspark-notebook-container
         command: bash -c "for job in /home/jovyan/work/java_mllib/*.class; do spark-submit --class $(basename $job .class) --master local[*] $job & done; wait"
-  
-
-
-
-    # - name: Send account credentials via Elastic Email SMTP
-    #   mail:
-    #     host: smtp.zoho.in
-    #     port: 465
-    #     secure: starttls
-    #     username: shoeb.corp@zohomail.in
-    #     password: "{{ lookup('env', 'SMTP_ZOHO_PASS') }}"
-    #     from: shoeb.corp@zohomail.in
-    #     to: "{{ item.email }}"
-    #     subject: "Your Account on {{ inventory_hostname }} ({{ vm_ip }})"
-    #     body: |
-    #       Hello {{ item.username }},
-
-    #       Your account has been created on {{ inventory_hostname }}.
-    #       Instance IP: {{ vm_ip }}
-    #       Username: {{ item.username }}
-    #       Password: {{ item.password }}
-
-    #       Thanks,
-    #       Admin
-    #   loop: "{{ users }}"
-    
-
-
