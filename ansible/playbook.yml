@@ -220,21 +220,21 @@
       community.docker.docker_container_exec:
         container: pyspark-notebook-container
         user: root
-        command: bash -c "
-          cd /home/jovyan/work/java_mllib &&
+        command: |
+          bash -c "cd /home/jovyan/work/java_mllib &&
           javac -cp '/usr/local/spark/jars/*' LogisticRegressionExample.java &&
-          jar cvf LogisticRegressionExample.jar LogisticRegressionExample.class
-        "
+          jar cvf LogisticRegressionExample.jar LogisticRegressionExample.class"
+
     
     - name: Run Java MLlib job from JAR
       community.docker.docker_container_exec:
         container: pyspark-notebook-container
-        command: bash -c "
-          spark-submit --class LogisticRegressionExample --master local[*] /home/jovyan/work/java_mllib/LogisticRegressionExample.jar
-        "
+        command: |
+          bash -c "spark-submit --class LogisticRegressionExample --master local[*] /home/jovyan/work/java_mllib/LogisticRegressionExample.jar"
 
 
     - name: Run 16 Java MLlib jobs in parallel
       community.docker.docker_container_exec:
         container: pyspark-notebook-container
-        command: bash -c "for job in /home/jovyan/work/java_mllib/*.class; do spark-submit --class $(basename $job .class) --master local[*] $job & done; wait"
+        command: |
+          bash -c "for job in /home/jovyan/work/java_mllib/*.class; do spark-submit --class $(basename $job .class) --master local[*] $job & done; wait"
