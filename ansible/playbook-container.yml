@@ -1,0 +1,13 @@
+- name: Install Scala inside container
+  community.docker.docker_container_exec:
+    container: pyspark-notebook-container
+    user: root
+    command: >
+      bash -c "apt-get update &&
+      DEBIAN_FRONTEND=noninteractive apt-get install -y wget &&
+      rm -f scala-2.12.15.tgz &&
+      wget --tries=5 -O scala-2.12.15.tgz https://downloads.lightbend.com/scala/2.12.15/scala-2.12.15.tgz &&
+      tar xvf scala-2.12.15.tgz &&
+      mv scala-2.12.15 /usr/local/scala &&
+      ln -s /usr/local/scala/bin/* /usr/local/bin/ &&
+      rm scala-2.12.15.tgz"
