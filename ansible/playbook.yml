@@ -77,11 +77,6 @@
         state: directory
         mode: '0755'
         
-    - name: Create java_mllib directory inside container
-      community.docker.docker_container_exec:
-        container: pyspark-notebook-container
-        user: root
-        command: mkdir -p /home/jovyan/work/java_mllib
         
     - name: Pull PySpark notebook Docker image
       docker_image:
@@ -146,6 +141,12 @@
         volumes:
           - "{{ notebook_dir }}:/home/jovyan/work"
         command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''"
+
+    - name: Create java_mllib directory inside container
+      community.docker.docker_container_exec:
+        container: pyspark-notebook-container
+        user: root
+        command: mkdir -p /home/jovyan/work/java_mllib
 
     - name: Install Scala inside container
       community.docker.docker_container_exec:
