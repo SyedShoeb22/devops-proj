@@ -51,38 +51,6 @@
         append: yes
       loop: "{{ users }}"
 
-    - name: Allow SSH ports in UFW
-      community.general.ufw:
-        rule: allow
-        port: "{{ item.port }}"
-        proto: tcp
-      loop: "{{ users }}"
-
-    - name: Enable UFW
-      community.general.ufw:
-        state: enabled
-
-    - name: Create unified SSH config for all users and ports
-      copy:
-        dest: "/etc/ssh/sshd_config.d/multiuser_ports.conf"
-        content: |
-          PasswordAuthentication yes
-          PermitRootLogin no
-{% for u in users %}
-          Port {{ u.port }}
-{% endfor %}
-
-{% for u in users %}
-          Match User {{ u.username }}
-              AllowTcpForwarding yes
-              PermitTTY yes
-              ForceCommand none
-              Port {{ u.port }}
-{% endfor %}
-
-    - name: Test SSH config syntax before restart
-      command: sshd -t
-
     - name: Restart SSH safely
       service:
         name: ssh
