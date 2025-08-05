@@ -71,6 +71,28 @@
         line: 'PasswordAuthentication yes'
         state: present
         
+    - name: Get public IP of remote VM
+      ansible.builtin.set_fact:
+        vm_ip: "{{ ansible_host }}"
+
+    - name: Ensure KbdInteractiveAuthentication yes
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: 'KbdInteractiveAuthentication no'
+        line: 'KbdInteractiveAuthentication yes'
+        state: present
+        
+    - name: Ensure ChallengeResponseAuthentication is no
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^ChallengeResponseAuthentication'
+        line: 'ChallengeResponseAuthentication no'
+        state: present
+    
+    - name: Restart SSH daemon
+      service:
+        name: ssh
+        state: restarted
     - name: Create notebook directory
       file:
         path: "{{ notebook_dir }}"
@@ -236,28 +258,7 @@
         container: pyspark-notebook-container
         command: bash -c "for job in /home/jovyan/work/java_mllib/*.class; do spark-submit --class $(basename $job .class) --master local[*] $job & done; wait"
   
-    - name: Get public IP of remote VM
-      ansible.builtin.set_fact:
-        vm_ip: "{{ ansible_host }}"
 
-    - name: Ensure KbdInteractiveAuthentication yes
-      lineinfile:
-        path: /etc/ssh/sshd_config
-        regexp: 'KbdInteractiveAuthentication no'
-        line: 'KbdInteractiveAuthentication yes'
-        state: present
-        
-    - name: Ensure ChallengeResponseAuthentication is no
-      lineinfile:
-        path: /etc/ssh/sshd_config
-        regexp: '^ChallengeResponseAuthentication'
-        line: 'ChallengeResponseAuthentication no'
-        state: present
-    
-    - name: Restart SSH daemon
-      service:
-        name: ssh
-        state: restarted
 
 
     # - name: Send account credentials via Elastic Email SMTP
