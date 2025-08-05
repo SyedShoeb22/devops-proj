@@ -216,16 +216,23 @@
               }
           }
 
-    - name: Compile Java MLlib job
+    - name: Compile Java MLlib job to JAR
       community.docker.docker_container_exec:
         container: pyspark-notebook-container
         user: root
-        command: bash -c "javac -cp '/usr/local/spark/jars/*' /home/jovyan/work/java_mllib/LogisticRegressionExample.java"
+        command: bash -c "
+          cd /home/jovyan/work/java_mllib &&
+          javac -cp '/usr/local/spark/jars/*' LogisticRegressionExample.java &&
+          jar cvf LogisticRegressionExample.jar LogisticRegressionExample.class
+        "
     
-    - name: Run Java MLlib job
+    - name: Run Java MLlib job from JAR
       community.docker.docker_container_exec:
         container: pyspark-notebook-container
-        command: bash -c "spark-submit --class LogisticRegressionExample --master local[*] /home/jovyan/work/java_mllib/LogisticRegressionExample.class"
+        command: bash -c "
+          spark-submit --class LogisticRegressionExample --master local[*] /home/jovyan/work/java_mllib/LogisticRegressionExample.jar
+        "
+
 
     - name: Run 16 Java MLlib jobs in parallel
       community.docker.docker_container_exec:
