@@ -1,25 +1,19 @@
 - hosts: servers
   become: yes
-  collections:
-    - community.docker
-  vars:
-    notebook_dir: /opt/pyspark-notebooks
-
   vars_files:
     - users.yml
 
   tasks:
-    - name: Debug users loaded from CSV
-      debug:
-        var: users
-  
-    - name: Install Docker
+    - name: Install required packages
       apt:
-        name: docker.io
+        name:
+          - docker.io
+          - openssh-server
+          - ufw
         state: present
         update_cache: yes
 
-    - name: Start and enable Docker service
+    - name: Enable and start Docker
       service:
         name: docker
         state: started
@@ -34,7 +28,7 @@
         create_home: yes
       loop: "{{ users }}"
 
-    - name: Ensure .ssh directory exists
+    - name: Ensure .ssh directory exists for each user
       file:
         path: "/home/{{ item.username }}/.ssh"
         state: directory
@@ -43,13 +37,6 @@
         mode: '0700'
       loop: "{{ users }}"
 
-    - name: Ensure SSH public key is installed
-      authorized_key:
-        user: "{{ item.username }}"
-        state: present
-        key: "{{ ssh_public_key }}"
-      loop: "{{ users }}"
-      
     - name: Add users to docker group
       user:
         name: "{{ item.username }}"
@@ -57,71 +44,51 @@
         append: yes
       loop: "{{ users }}"
 
-    - name: Add users to Sudo group
+    - name: Add users to sudo group
       user:
         name: "{{ item.username }}"
         groups: sudo
         append: yes
       loop: "{{ users }}"
 
-    - name: Ensure SSH allows password authentication
-      lineinfile:
-        path: /etc/ssh/sshd_config
-        regexp: '^PasswordAuthentication'
-        line: 'PasswordAuthentication yes'
-        state: present
-        
-    - name: Get public IP of remote VM
-      ansible.builtin.set_fact:
-        vm_ip: "{{ ansible_host }}"
-
-    - name: Ensure KbdInteractiveAuthentication yes
-      lineinfile:
-        path: /etc/ssh/sshd_config
-        regexp: 'KbdInteractiveAuthentication no'
-        line: 'KbdInteractiveAuthentication yes'
-        state: present
-        
-    - name: Ensure ChallengeResponseAuthentication is no
-      lineinfile:
-        path: /etc/ssh/sshd_config
-        regexp: '^ChallengeResponseAuthentication'
-        line: 'ChallengeResponseAuthentication no'
-        state: present
-
-    - name: Ensure required packages are installed
-      apt:
-        name:
-          - openssh-server
-          - ufw
-        state: present
-        update_cache: yes
-
-    - name: Create individual SSH configs for each user
-      copy:
-        dest: "/etc/ssh/sshd_config.d/{{ item.username }}.conf"
-        content: |
-          Port {{ item.port }}
-          PermitRootLogin no
-          AllowUsers {{ item.username }}
-          PasswordAuthentication yes
-      loop: "{{ users }}"
-
-    - name: Allow SSH ports in UFW firewall
+    - name: Allow SSH ports in UFW
       community.general.ufw:
         rule: allow
         port: "{{ item.port }}"
         proto: tcp
       loop: "{{ users }}"
 
-    - name: Ensure UFW is enabled
+    - name: Enable UFW
       community.general.ufw:
         state: enabled
 
-    - name: Restart SSH daemon
+    - name: Create unified SSH config for all users and ports
+      copy:
+        dest: "/etc/ssh/sshd_config.d/multiuser_ports.conf"
+        content: |
+          PasswordAuthentication yes
+          PermitRootLogin no
+{% for u in users %}
+          Port {{ u.port }}
+{% endfor %}
+
+{% for u in users %}
+          Match User {{ u.username }}
+              AllowTcpForwarding yes
+              PermitTTY yes
+              ForceCommand none
+              Port {{ u.port }}
+{% endfor %}
+
+    - name: Test SSH config syntax before restart
+      command: sshd -t
+
+    - name: Restart SSH safely
       service:
         name: ssh
         state: restarted
+
+        
     - name: Create notebook directory
       file:
         path: "{{ notebook_dir }}"
