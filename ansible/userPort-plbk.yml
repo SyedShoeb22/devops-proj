@@ -1,3 +1,4 @@
+---
 - hosts: servers
   become: yes
   vars_files:
@@ -24,7 +25,7 @@
         port: "22"
         proto: tcp
 
-    - name: Add new SSH ports to sshd_config
+    - name: Add new SSH ports for each user to sshd_config
       lineinfile:
         path: /etc/ssh/sshd_config
         insertafter: '^#Port 22'
@@ -33,7 +34,7 @@
       loop: "{{ users }}"
       notify: Restart SSH
 
-    - name: Allow all new ports in UFW
+    - name: Allow new SSH ports in UFW
       community.general.ufw:
         rule: allow
         port: "{{ item.port }}"
