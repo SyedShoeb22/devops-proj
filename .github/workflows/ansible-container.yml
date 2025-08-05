@@ -1,4 +1,4 @@
-name: Run Ansible Only
+name: Run container ansible Only
 
 on:
   workflow_dispatch:
