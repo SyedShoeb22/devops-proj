@@ -1,0 +1,55 @@
+- hosts: servers
+  become: yes
+  vars_files:
+    - users.yml
+
+  tasks:
+    - name: Install required packages
+      apt:
+        name:
+          - openssh-server
+          - ufw
+        state: present
+        update_cache: yes
+
+    - name: Create users
+      user:
+        name: "{{ item.username }}"
+        password: "{{ item.password | password_hash('sha512') }}"
+        shell: /bin/bash
+        state: present
+        create_home: yes
+      loop: "{{ users }}"
+
+    - name: Add users to sudo group
+      user:
+        name: "{{ item.username }}"
+        groups: sudo
+        append: yes
+      loop: "{{ users }}"
+
+    - name: Create SSH config for each user
+      copy:
+        dest: "/etc/ssh/sshd_config.d/{{ item.username }}.conf"
+        content: |
+          Port {{ item.port }}
+          AllowUsers {{ item.username }}
+          PasswordAuthentication yes
+          PermitRootLogin no
+      loop: "{{ users }}"
+
+    - name: Allow SSH ports in firewall
+      community.general.ufw:
+        rule: allow
+        port: "{{ item.port }}"
+        proto: tcp
+      loop: "{{ users }}"
+
+    - name: Enable UFW firewall
+      community.general.ufw:
+        state: enabled
+
+    - name: Restart SSH
+      service:
+        name: ssh
+        state: restarted
