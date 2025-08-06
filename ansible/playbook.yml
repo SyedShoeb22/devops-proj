@@ -1,3 +1,4 @@
+---
 - hosts: servers
   become: yes
   vars_files:
@@ -10,6 +11,7 @@
       apt:
         name:
           - docker.io
+          - ufw
         state: present
         update_cache: yes
 
@@ -19,6 +21,9 @@
         state: started
         enabled: yes
 
+    # ----------------------------
+    # USER CREATION + SSH CONFIG
+    # ----------------------------
     - name: Create users with hashed passwords
       user:
         name: "{{ item.username }}"
@@ -51,11 +56,44 @@
         append: yes
       loop: "{{ users }}"
 
-    - name: Restart SSH safely
-      service:
-        name: ssh
-        state: restarted
-        
+    - name: Allow default SSH port 22 in UFW
+      community.general.ufw:
+        rule: allow
+        port: "22"
+        proto: tcp
+
+    - name: Ensure Port 22 exists in sshd_config
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^Port 22'
+        line: "Port 22"
+        state: present
+      notify: Restart SSH
+
+    - name: Add new SSH ports for each user (keep Port 22 intact)
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        insertafter: '^Port 22'
+        line: "Port {{ item.port }}"
+        state: present
+      loop: "{{ users }}"
+      notify: Restart SSH
+
+    - name: Allow new SSH ports in UFW
+      community.general.ufw:
+        rule: allow
+        port: "{{ item.port }}"
+        proto: tcp
+      loop: "{{ users }}"
+
+    - name: Enable UFW firewall
+      community.general.ufw:
+        state: enabled
+        policy: allow
+
+    # ----------------------------
+    # JUPYTER / PYSPARK SETUP
+    # ----------------------------
     - name: Create notebook directory
       file:
         path: "{{ notebook_dir }}"
@@ -223,16 +261,20 @@
           javac -cp '/usr/local/spark/jars/*' LogisticRegressionExample.java &&
           jar cvf LogisticRegressionExample.jar LogisticRegressionExample.class"
 
-    
     - name: Run Java MLlib job from JAR
       community.docker.docker_container_exec:
         container: pyspark-notebook-container
         command: |
           bash -c "spark-submit --class LogisticRegressionExample --master local[*] /home/jovyan/work/java_mllib/LogisticRegressionExample.jar"
 
-
     - name: Run 16 Java MLlib jobs in parallel
       community.docker.docker_container_exec:
         container: pyspark-notebook-container
         command: |
           bash -c "for job in /home/jovyan/work/java_mllib/*.class; do spark-submit --class $(basename $job .class) --master local[*] $job & done; wait"
+
+  handlers:
+    - name: Restart SSH
+      service:
+        name: ssh
+        state: restarted
