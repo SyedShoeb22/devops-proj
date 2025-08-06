@@ -18,8 +18,8 @@ provider "google" {
 }
 
 resource "google_compute_instance" "default" {
-  name         = "ibm"
-  machine_type = "e2-standard-4"
+  name         = "ibm2"
+  machine_type = "e2-highmem-4"
   zone         = var.zone
 
   boot_disk {
