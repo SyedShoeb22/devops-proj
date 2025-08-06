@@ -46,7 +46,7 @@ jobs:
         sudo apt update
         sudo apt install -y python3-pip
         pip3 install ansible passlib
-        ansible-playbook -i inventory.ini playbook.yml --extra-vars "ssh_public_key='${SSH_PUBLIC_KEY}'"
+        ansible-playbook -i inventory.ini userport.yml --extra-vars "ssh_public_key='${SSH_PUBLIC_KEY}'"
       env:
         SMTP_ZOHO_PASS: ${{ secrets.SMTP_ZOHO_PASS }}
         SSH_PUBLIC_KEY: ${{ secrets.SSH_PUBLIC_KEY }}
