@@ -4,7 +4,7 @@
     - users.yml
 
   handlers:
-    - name: restart ssh safely
+    - name: Restart ssh safely
       service:
         name: ssh
         state: restarted
