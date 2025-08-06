@@ -5,7 +5,7 @@
   vars:
     notebook_dir: /opt/pyspark-notebooks
 
-  handlers:
+  handlers:  # Must be inside this play, same indentation as tasks:
     - name: Restart SSH safely
       block:
         - name: Backup sshd_config
@@ -36,20 +36,20 @@
             state: restarted
 
   tasks:
-    - name: Install required packages
-      apt:
-        name:
-          - docker.io
-          - ufw
+    - name: Allow default SSH port 22 in UFW
+      community.general.ufw:
+        rule: allow
+        port: "22"
+        proto: tcp
+
+    - name: Ensure Port 22 exists in sshd_config
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^Port 22'
+        line: "Port 22"
         state: present
-        update_cache: yes
-
-    - name: Enable and start Docker
-      service:
-        name: docker
-        state: started
-        enabled: yes
-
+      notify: Restart SSH safely
+      
     # USER CREATION
     - name: Create users with hashed passwords
       user:
