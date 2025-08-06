@@ -1,188 +1,134 @@
 - hosts: servers
   become: yes
-  collections:
-    - community.docker
+  vars_files:
+    - users.yml
   vars:
     notebook_dir: /opt/pyspark-notebooks
+    
+handlers:
+  - name: Restart ssh safely
+    block:
+      - name: Validate sshd_config
+        command: sshd -t
+        register: sshd_check
+        failed_when: sshd_check.rc != 0
+
+      - name: Restart ssh
+        service:
+          name: ssh
+          state: restarted
+    rescue:
+      - name: Restore sshd_config backup
+        copy:
+          src: /etc/ssh/sshd_config.bak
+          dest: /etc/ssh/sshd_config
+          remote_src: yes
+
+      - name: Restart ssh after restore
+        service:
+          name: ssh
+          state: restarted
 
   tasks:
-    - name: Pull PySpark notebook Docker image
-      docker_image:
-        name: jupyter/pyspark-notebook:latest
-        source: pull
-
-    - name: Create a PySpark Sample Jupyter Notebook file
+    - name: Backup sshd_config
       copy:
-        dest: "{{ notebook_dir }}/PySparkSample.ipynb"
-        content: |
-            {
-             "cells": [
-              {
-               "cell_type": "code",
-               "execution_count": null,
-               "id": "hello-pyspark",
-               "metadata": {},
-               "outputs": [],
-               "source": [
-                "from pyspark.sql import SparkSession\n",
-                "\n",
-                "# Create Spark session\n",
-                "spark = SparkSession.builder \\\n",
-                "    .appName(\"Hello PySpark\") \\\n",
-                "    .getOrCreate()\n",
-                "\n",
-                "# Create a DataFrame\n",
-                "data = [(\"Shoeb\", 25), (\"Abrar\", 30), (\"Sara\", 22)]\n",
-                "df = spark.createDataFrame(data, [\"Name\", \"Age\"])\n",
-                "\n",
-                "# Show DataFrame\n",
-                "df.show()\n",
-                "\n",
-                "# Stop Spark session\n",
-                "spark.stop()"
-               ]
-              }
-             ],
-             "metadata": {
-              "kernelspec": {
-               "display_name": "Python 3 (Spark)",
-               "language": "python",
-               "name": "python3"
-              },
-              "language_info": {
-               "name": "python",
-               "version": ""
-              }
-             },
-             "nbformat": 4,
-             "nbformat_minor": 5
-            }
+        src: /etc/ssh/sshd_config
+        dest: /etc/ssh/sshd_config.bak
+        remote_src: yes
 
-    - name: Run PySpark Jupyter notebook container
-      docker_container:
-        name: pyspark-notebook-container
-        image: jupyter/pyspark-notebook:latest
-        state: started
-        restart_policy: always
-        ports:
-          - "8888:8888"
-        volumes:
-          - "{{ notebook_dir }}:/home/jovyan/work"
-        command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''"
+    - name: Validate sshd_config syntax before change
+      command: sshd -t
+      register: sshd_check
+      failed_when: sshd_check.rc != 0
 
-    - name: Create java_mllib directory inside container
-      community.docker.docker_container_exec:
-        container: pyspark-notebook-container
-        user: root
-        command: mkdir -p /home/jovyan/work/java_mllib
+    - name: Ensure Port 22 exists in sshd_config
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^Port 22'
+        line: "Port 22"
+      notify: Restart ssh safely
 
-    - name: Download Scala tarball on host
-      get_url:
-        url: https://downloads.lightbend.com/scala/2.12.15/scala-2.12.15.tgz
-        dest: /opt/scala-2.12.15.tgz
-        mode: '0644'
-        force: yes
-    
-    - name: Stop current PySpark container
-      community.docker.docker_container:
-        name: pyspark-notebook-container
-        state: absent
-    
-    - name: Start container with Scala tarball mounted
-      community.docker.docker_container:
-        name: pyspark-notebook-container
-        image: jupyter/pyspark-notebook:latest
-        state: started
-        restart_policy: always
-        ports:
-          - "8888:8888"
-        volumes:
-          - "{{ notebook_dir }}:/home/jovyan/work"
-          - "/opt/scala-2.12.15.tgz:/tmp/scala-2.12.15.tgz"
-        command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''"
+    - name: Add new SSH ports for each user
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        insertafter: '^Port 22'
+        line: "Port {{ item.port }}"
+      loop: "{{ users }}"
+      notify: Restart ssh safely
 
-    - name: Install Scala inside container
-      community.docker.docker_container_exec:
-        container: pyspark-notebook-container
-        user: root
-        command: bash -c "
-          tar -xzf /tmp/scala-2.12.15.tgz -C /usr/local &&
-          mv /usr/local/scala-2.12.15 /usr/local/scala &&
-          ln -sf /usr/local/scala/bin/* /usr/local/bin/"
+    - name: Add user-specific ports
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        line: "Port {{ item.port }}"
+        state: present
+      loop: "{{ users }}"
+      notify: Restart ssh safely
+      
+    # USER CREATION
+    - name: Create users with hashed passwords
+      user:
+        name: "{{ item.username }}"
+        password: "{{ item.password | password_hash('sha512') }}"
+        shell: /bin/bash
+        state: present
+        create_home: yes
+      loop: "{{ users }}"
 
-  
-    - name: Install Java in container
-      community.docker.docker_container_exec:
-        container: pyspark-notebook-container
-        user: root
-        command: bash -c "apt-get update && apt-get install -y openjdk-17-jdk"
-    
-    - name: Create MLlib jobs directory
+    - name: Ensure .ssh directory exists for each user
       file:
-        path: "{{ notebook_dir }}/jobs"
+        path: "/home/{{ item.username }}/.ssh"
         state: directory
-        mode: '0755'
+        owner: "{{ item.username }}"
+        group: "{{ item.username }}"
+        mode: '0700'
+      loop: "{{ users }}"
 
-    - name: Create Java MLlib job source
-      copy:
-        dest: "{{ notebook_dir }}/java_mllib/LogisticRegressionExample.java"
-        content: |
-          import org.apache.spark.sql.SparkSession;
-          import org.apache.spark.ml.classification.LogisticRegression;
-          import org.apache.spark.ml.linalg.Vectors;
-          import org.apache.spark.sql.Row;
-          import org.apache.spark.sql.Dataset;
-          import org.apache.spark.sql.RowFactory;
-          import org.apache.spark.sql.types.DataTypes;
-          import org.apache.spark.sql.types.StructField;
-          import org.apache.spark.sql.types.StructType;
-          import java.util.Arrays;
-          import java.util.List;
-    
-          public class LogisticRegressionExample {
-              public static void main(String[] args) {
-                  SparkSession spark = SparkSession.builder()
-                          .appName("Java MLlib Logistic Regression")
-                          .master("local[*]")
-                          .getOrCreate();
-    
-                  List<Row> data = Arrays.asList(
-                      RowFactory.create(1.0, Vectors.dense(0.0, 1.1, 0.1)),
-                      RowFactory.create(0.0, Vectors.dense(2.0, 1.0, -1.0)),
-                      RowFactory.create(0.0, Vectors.dense(2.0, 1.3, 1.0)),
-                      RowFactory.create(1.0, Vectors.dense(0.0, 1.2, -0.5))
-                  );
-    
-                  StructType schema = DataTypes.createStructType(new StructField[]{
-                      DataTypes.createStructField("label", DataTypes.DoubleType, false),
-                      DataTypes.createStructField("features", new org.apache.spark.ml.linalg.VectorUDT(), false)
-                  });
-    
-                  Dataset<Row> df = spark.createDataFrame(data, schema);
-    
-                  LogisticRegression lr = new LogisticRegression()
-                          .setMaxIter(10)
-                          .setRegParam(0.01);
-    
-                  lr.fit(df).summary().predictions().show();
-    
-                  spark.stop();
-              }
-          }
+    - name: Add users to docker group
+      user:
+        name: "{{ item.username }}"
+        groups: docker
+        append: yes
+      loop: "{{ users }}"
 
-    - name: Compile Java MLlib job
-      community.docker.docker_container_exec:
-        container: pyspark-notebook-container
-        user: root
-        command: bash -c "javac -cp '/usr/local/spark/jars/*' /home/jovyan/work/java_mllib/LogisticRegressionExample.java"
-    
-    - name: Run Java MLlib job
-      community.docker.docker_container_exec:
-        container: pyspark-notebook-container
-        command: bash -c "spark-submit --class LogisticRegressionExample --master local[*] /home/jovyan/work/java_mllib/LogisticRegressionExample.class"
+    - name: Add users to sudo group
+      user:
+        name: "{{ item.username }}"
+        groups: sudo
+        append: yes
+      loop: "{{ users }}"
 
-    - name: Run 16 Java MLlib jobs in parallel
-      community.docker.docker_container_exec:
-        container: pyspark-notebook-container
-        command: bash -c "for job in /home/jovyan/work/java_mllib/*.class; do spark-submit --class $(basename $job .class) --master local[*] $job & done; wait"
-  
+    # SSH CONFIG
+    - name: Allow default SSH port 22 in UFW
+      community.general.ufw:
+        rule: allow
+        port: "22"
+        proto: tcp
+
+    - name: Ensure Port 22 exists in sshd_config
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^Port 22'
+        line: "Port 22"
+        state: present
+      notify: Restart ssh safely
+
+    - name: Add new SSH ports for each user (keep Port 22 intact)
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        insertafter: '^Port 22'
+        line: "Port {{ item.port }}"
+        state: present
+      loop: "{{ users }}"
+      notify: Restart ssh safely
+
+    - name: Allow new SSH ports in UFW
+      community.general.ufw:
+        rule: allow
+        port: "{{ item.port }}"
+        proto: tcp
+      loop: "{{ users }}"
+
+    - name: Enable UFW firewall
+      community.general.ufw:
+        state: enabled
+        policy: allow
