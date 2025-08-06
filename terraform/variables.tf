@@ -12,7 +12,7 @@ variable "region" {
 variable "zone" {
   description = "GCP zone"
   type        = string
-  default     = "europe-central1-a"
+  default     = "us-central1-a"
 }
 
 variable "ssh_public_key" {
