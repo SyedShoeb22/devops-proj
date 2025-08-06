@@ -6,13 +6,13 @@ variable "gcp_credentials_file" {
 variable "region" {
   description = "GCP region"
   type        = string
-  default     = "europe-central2"
+  default     = "us-central1"
 }
 
 variable "zone" {
   description = "GCP zone"
   type        = string
-  default     = "europe-central2-a"
+  default     = "europe-central1-a"
 }
 
 variable "ssh_public_key" {
