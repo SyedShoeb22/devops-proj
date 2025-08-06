@@ -5,7 +5,7 @@
   vars:
     notebook_dir: /opt/pyspark-notebooks
 
-  handlers:   # ✅ handlers are defined before tasks
+  handlers:
     - name: Restart SSH safely
       block:
         - name: Backup sshd_config
@@ -34,7 +34,7 @@
           service:
             name: ssh
             state: restarted
-            
+
   tasks:
     - name: Install required packages
       apt:
@@ -50,9 +50,7 @@
         state: started
         enabled: yes
 
-    # ----------------------------
-    # USER CREATION + SSH CONFIG
-    # ----------------------------
+    # USER CREATION
     - name: Create users with hashed passwords
       user:
         name: "{{ item.username }}"
@@ -85,6 +83,7 @@
         append: yes
       loop: "{{ users }}"
 
+    # SSH CONFIG
     - name: Allow default SSH port 22 in UFW
       community.general.ufw:
         rule: allow
