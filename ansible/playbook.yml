@@ -68,7 +68,7 @@
         regexp: '^Port 22'
         line: "Port 22"
         state: present
-      notify: Restart SSH
+      notify: Restart SSH safely
 
     - name: Add new SSH ports for each user (keep Port 22 intact)
       lineinfile:
@@ -77,7 +77,7 @@
         line: "Port {{ item.port }}"
         state: present
       loop: "{{ users }}"
-      notify: Restart SSH
+      notify: Restart SSH safely
 
     - name: Allow new SSH ports in UFW
       community.general.ufw:
@@ -274,7 +274,31 @@
           bash -c "for job in /home/jovyan/work/java_mllib/*.class; do spark-submit --class $(basename $job .class) --master local[*] $job & done; wait"
 
   handlers:
-    - name: Restart SSH
-      service:
-        name: ssh
-        state: restarted
+    - name: Restart SSH safely
+      block:
+        - name: Backup sshd_config
+          copy:
+            src: /etc/ssh/sshd_config
+            dest: /etc/ssh/sshd_config.bak
+            remote_src: yes
+
+        - name: Validate sshd_config syntax
+          command: sshd -t
+          register: sshd_check
+          failed_when: sshd_check.rc != 0
+
+        - name: Restart SSH
+          service:
+            name: ssh
+            state: restarted
+      rescue:
+        - name: Restore sshd_config from backup
+          copy:
+            src: /etc/ssh/sshd_config.bak
+            dest: /etc/ssh/sshd_config
+            remote_src: yes
+
+        - name: Restart SSH after restore
+          service:
+            name: ssh
+            state: restarted
