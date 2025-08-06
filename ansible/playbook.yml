@@ -2,7 +2,9 @@
   become: yes
   vars_files:
     - users.yml
-
+  vars:
+    notebook_dir: /opt/pyspark-notebooks
+    
   handlers:
     - name: Restart ssh safely
       service:
