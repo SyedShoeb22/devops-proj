@@ -1,1 +1,93 @@
+name: 'Terraform + Ansible on GCP'
 
+on:
+  repository_dispatch:
+    types: [trigger-vm-creation]
+  workflow_dispatch:
+  
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    env:
+      GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+    defaults:
+      run:
+        working-directory: ./terraform
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.4
+
+      - name: Create GCP credentials file
+        run: echo "${GOOGLE_CREDENTIALS}" > service-account.json
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+      - name: Add SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa
+          echo "${SSH_PUBLIC_KEY}" > ~/.ssh/id_rsa.pub
+          chmod 600 ~/.ssh/id_rsa
+          chmod 644 ~/.ssh/id_rsa.pub
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_PUBLIC_KEY: ${{ secrets.SSH_PUBLIC_KEY }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Refresh and Check Instance
+        id: check_instance
+        run: |
+          terraform refresh -var="gcp_credentials_file=service-account.json"
+          if terraform state list | grep google_compute_instance.default; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Terraform Apply
+        if: steps.check_instance.outputs.exists == 'false'
+        run: |
+          terraform apply -auto-approve \
+            -var="gcp_credentials_file=service-account.json" \
+            -var="region=us-central1" \
+            -var="zone=us-central1-a" \
+            -var="ssh_public_key=~/.ssh/id_rsa.pub"
+
+      - name: Extract Instance IP
+        id: get_ip
+        run: |
+          echo "INSTANCE_IP=$(terraform output -raw instance_ip)" >> $GITHUB_ENV
+
+      - name: Prepare Ansible Inventory
+        run: |
+          echo "[servers]" > ../ansible/inventory.ini
+          echo "$INSTANCE_IP ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_rsa" >> ../ansible/inventory.ini
+          
+      - name: Disable SSH strict host key checking
+        run: |
+          mkdir -p ~/.ssh
+          echo -e "Host *\n\tStrictHostKeyChecking no\n\tUserKnownHostsFile=/dev/null\n" >> ~/.ssh/config
+
+      - name: Install Ansible and passlib (clean pip setup)
+        run: |
+          sudo apt update
+          sudo apt install -y python3-pip
+          pip3 install ansible passlib
+  
+      - name: Run Ansible Playbook
+        run: |
+          ansible-playbook -i inventory.ini userPort-plbk.yml --extra-vars "ssh_public_key='${SSH_PUBLIC_KEY}'"
+        env:
+          SMTP_ZOHO_PASS: ${{ secrets.SMTP_ZOHO_PASS }}
+          SSH_PUBLIC_KEY: ${{ secrets.SSH_PUBLIC_KEY }}
+        working-directory: ./ansible
