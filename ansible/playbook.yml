@@ -5,8 +5,9 @@
   vars:
     notebook_dir: /opt/pyspark-notebooks
 
-  handlers:  # Must be inside this play, same indentation as tasks:
-    - name: Restart SSH safely
+  handlers:
+    - name: restart ssh safely
+      listen: "restart ssh safely"
       block:
         - name: Backup sshd_config
           copy:
@@ -48,7 +49,15 @@
         regexp: '^Port 22'
         line: "Port 22"
         state: present
-      notify: Restart SSH safely
+      notify: restart ssh safely
+
+    - name: Add custom SSH ports
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        insertafter: '^Port 22'
+        line: "Port {{ item.port }}"
+      loop: "{{ users }}"
+      notify: restart ssh safely\
       
     # USER CREATION
     - name: Create users with hashed passwords
