@@ -1,12 +1,11 @@
----
 - hosts: servers
   become: yes
   vars_files:
     - users.yml
   vars:
     notebook_dir: /opt/pyspark-notebooks
-    
-  handlers:
+
+  handlers:   # ✅ handlers are defined before tasks
     - name: Restart SSH safely
       block:
         - name: Backup sshd_config
@@ -34,6 +33,8 @@
         - name: Restart SSH after restore
           service:
             name: ssh
+            state: restarted
+            
   tasks:
     - name: Install required packages
       apt:
