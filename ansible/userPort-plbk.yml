@@ -25,10 +25,18 @@
         port: "22"
         proto: tcp
 
-    - name: Add new SSH ports for each user to sshd_config
+    - name: Ensure Port 22 exists in sshd_config
       lineinfile:
         path: /etc/ssh/sshd_config
-        insertafter: '^#Port 22'
+        regexp: '^Port 22'
+        line: "Port 22"
+        state: present
+      notify: Restart SSH
+
+    - name: Add new SSH ports for each user (keep Port 22 intact)
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        insertafter: '^Port 22'
         line: "Port {{ item.port }}"
         state: present
       loop: "{{ users }}"
@@ -44,6 +52,7 @@
     - name: Enable UFW firewall
       community.general.ufw:
         state: enabled
+        policy: allow
 
   handlers:
     - name: Restart SSH
