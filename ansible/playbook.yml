@@ -10,6 +10,18 @@
       service:
         name: ssh
         state: restarted
+        
+  rescue:
+    - name: Restore sshd_config backup
+      copy:
+        src: /etc/ssh/sshd_config.bak
+        dest: /etc/ssh/sshd_config
+        remote_src: yes
+
+    - name: Restart ssh after restore
+      service:
+        name: ssh
+        state: restarted
 
   tasks:
     - name: Backup sshd_config
@@ -38,11 +50,11 @@
       loop: "{{ users }}"
       notify: Restart ssh safely
 
-    - name: Add custom SSH ports
+    - name: Add user-specific ports
       lineinfile:
         path: /etc/ssh/sshd_config
-        insertafter: '^Port 22'
         line: "Port {{ item.port }}"
+        state: present
       loop: "{{ users }}"
       notify: Restart ssh safely
       
