@@ -42,7 +42,7 @@
         insertafter: '^Port 22'
         line: "Port {{ item.port }}"
       loop: "{{ users }}"
-      notify: Restart ssh safely\
+      notify: Restart ssh safely
       
     # USER CREATION
     - name: Create users with hashed passwords
@@ -90,7 +90,7 @@
         regexp: '^Port 22'
         line: "Port 22"
         state: present
-      notify: Restart SSH safely
+      notify: Restart ssh safely
 
     - name: Add new SSH ports for each user (keep Port 22 intact)
       lineinfile:
