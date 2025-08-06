@@ -99,7 +99,7 @@
         line: "Port {{ item.port }}"
         state: present
       loop: "{{ users }}"
-      notify: Restart SSH safely
+      notify: Restart ssh safely
 
     - name: Allow new SSH ports in UFW
       community.general.ufw:
