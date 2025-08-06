@@ -10,8 +10,6 @@
       apt:
         name:
           - docker.io
-          - openssh-server
-          - ufw
         state: present
         update_cache: yes
 
