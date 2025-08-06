@@ -26,7 +26,7 @@
         path: /etc/ssh/sshd_config
         regexp: '^Port 22'
         line: "Port 22"
-      notify: restart ssh safely
+      notify: Restart ssh safely
 
     - name: Add new SSH ports for each user
       lineinfile:
@@ -34,7 +34,7 @@
         insertafter: '^Port 22'
         line: "Port {{ item.port }}"
       loop: "{{ users }}"
-      notify: restart ssh safely
+      notify: Restart ssh safely
 
     - name: Add custom SSH ports
       lineinfile:
@@ -42,7 +42,7 @@
         insertafter: '^Port 22'
         line: "Port {{ item.port }}"
       loop: "{{ users }}"
-      notify: restart ssh safely\
+      notify: Restart ssh safely\
       
     # USER CREATION
     - name: Create users with hashed passwords
