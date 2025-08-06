@@ -1,1 +1,53 @@
+name: Run User Port Ansible Only
 
+on:
+  workflow_dispatch:
+
+jobs:
+  ansible:
+    name: Run Ansible on Existing VM
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repo
+      uses: actions/checkout@v4
+
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
+
+    - name: Get First Running VM Name, Zone, and IP
+      id: get_vm_info
+      run: |
+        INSTANCE_NAME=$(gcloud compute instances list --filter="status:RUNNING" --format="value(name)" --limit=1)
+        ZONE=$(gcloud compute instances list --filter="name=($INSTANCE_NAME)" --format="value(zone)" --limit=1 | awk -F/ '{print $NF}')
+        IP=$(gcloud compute instances describe "$INSTANCE_NAME" --zone="$ZONE" --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
+
+        echo "INSTANCE_NAME=$INSTANCE_NAME" >> $GITHUB_ENV
+        echo "INSTANCE_ZONE=$ZONE" >> $GITHUB_ENV
+        echo "INSTANCE_IP=$IP" >> $GITHUB_ENV
+
+    - name: Setup SSH Key
+      run: |
+        mkdir -p ~/.ssh
+        printf "%s\n" "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keygen -y -f ~/.ssh/id_rsa > ~/.ssh/id_rsa.pub
+        echo -e "Host *\n\tStrictHostKeyChecking no\n\tUserKnownHostsFile=/dev/null\n" > ~/.ssh/config
+
+    - name: Prepare Ansible Inventory
+      run: |
+        echo "[servers]" > ./ansible/inventory.ini
+        echo "${{ env.INSTANCE_IP }} ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_rsa" >> ./ansible/inventory.ini
+
+    - name: Run Ansible Playbook
+      run: |
+        sudo apt update
+        sudo apt install -y python3-pip
+        pip3 install ansible passlib
+        ansible-playbook -i inventory.ini playbook.yml --extra-vars "ssh_public_key='${SSH_PUBLIC_KEY}'"
+      env:
+        SMTP_ZOHO_PASS: ${{ secrets.SMTP_ZOHO_PASS }}
+        SSH_PUBLIC_KEY: ${{ secrets.SSH_PUBLIC_KEY }}
+      working-directory: ./ansible
