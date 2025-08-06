@@ -5,7 +5,35 @@
     - users.yml
   vars:
     notebook_dir: /opt/pyspark-notebooks
+    
+  handlers:
+    - name: Restart SSH safely
+      block:
+        - name: Backup sshd_config
+          copy:
+            src: /etc/ssh/sshd_config
+            dest: /etc/ssh/sshd_config.bak
+            remote_src: yes
 
+        - name: Validate sshd_config syntax
+          command: sshd -t
+          register: sshd_check
+          failed_when: sshd_check.rc != 0
+
+        - name: Restart SSH
+          service:
+            name: ssh
+            state: restarted
+      rescue:
+        - name: Restore sshd_config from backup
+          copy:
+            src: /etc/ssh/sshd_config.bak
+            dest: /etc/ssh/sshd_config
+            remote_src: yes
+
+        - name: Restart SSH after restore
+          service:
+            name: ssh
   tasks:
     - name: Install required packages
       apt:
